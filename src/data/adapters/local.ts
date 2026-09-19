@@ -60,6 +60,23 @@ function readRaw(storageKey: string) {
 export const localAdapter: TvDataAdapter = {
   name: "local",
 
+  // localStorage is synchronous: nothing to load, always ready.
+  async init() {
+    return { source: "local" }
+  },
+
+  isReady() {
+    return true
+  },
+
+  invalidate() {
+    // Nothing is cached in memory.
+  },
+
+  readMeta() {
+    return { draftUpdatedAt: null, publishedAt: null }
+  },
+
   read<K extends TvContentKey>(key: K, version: ContentVersion) {
     return readRaw(storageKeyFor(key, version)) as
       | TvContentMap[K]
@@ -99,8 +116,9 @@ export const localAdapter: TvDataAdapter = {
   },
 
   // The browser "storage" event fires only in *other* tabs of the same
-  // browser profile — exactly the prototype's original sync behavior.
-  subscribe(onChange) {
+  // browser profile, and only when the value actually changed — exactly
+  // the prototype's original sync behavior.
+  subscribePublished(onChange) {
     const handleStorage = (event: StorageEvent) => {
       const key = publishedKeyForStorageKey(event.key)
 

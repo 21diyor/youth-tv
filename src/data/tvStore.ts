@@ -9,6 +9,7 @@ import {
   localStorageKeys,
 } from "@/data/adapters/local"
 import { supabaseAdapter } from "@/data/adapters/supabase"
+import { isSameContent } from "@/data/contentEquality"
 
 import type {
   AppealsContent,
@@ -18,6 +19,8 @@ import type {
   TvContentKey,
   TvContentMap,
   TvDataAdapter,
+  TvInitResult,
+  TvSurface,
 } from "@/data/tvTypes"
 
 export type {
@@ -28,7 +31,11 @@ export type {
   SlideSettings,
   TvContentKey,
   TvContentMap,
+  TvInitResult,
+  TvSurface,
 } from "@/data/tvTypes"
+
+export { isSameContent }
 
 // ======================================================
 // BACKEND SELECTION
@@ -37,18 +44,51 @@ export type {
 function selectAdapter(): TvDataAdapter {
   const backend = import.meta.env.VITE_DATA_BACKEND ?? "local"
 
-  if (backend === "supabase") {
-    console.warn(
-      "[tvStore] VITE_DATA_BACKEND=supabase: Supabase adapter is a placeholder and is not connected yet."
-    )
-
-    return supabaseAdapter
-  }
-
-  return localAdapter
+  return backend === "supabase" ? supabaseAdapter : localAdapter
 }
 
 const adapter = selectAdapter()
+
+export const tvBackend = adapter.name
+
+// ======================================================
+// INITIALIZATION
+// ======================================================
+
+let lastUserKey: string | null | undefined
+
+/**
+ * Load what `surface` needs before its first render. Local: resolves
+ * immediately. Supabase: "tv" loads published rows (falls back to the
+ * offline snapshot), "admin" loads published + draft rows. Getters are
+ * synchronous once this resolves.
+ *
+ * Pass the signed-in user's id as `userKey` for the admin surface so a
+ * different user never sees drafts loaded for the previous one.
+ */
+export function initTvStore(options: {
+  surface: TvSurface
+  userKey?: string | null
+}): Promise<TvInitResult> {
+  if (
+    options.surface === "admin" &&
+    lastUserKey !== undefined &&
+    lastUserKey !== (options.userKey ?? null)
+  ) {
+    adapter.invalidate()
+  }
+
+  if (options.surface === "admin") {
+    lastUserKey = options.userKey ?? null
+  }
+
+  return adapter.init(options.surface)
+}
+
+/** True when getters can be used right now (always true for local). */
+export function isTvStoreReady(surface: TvSurface): boolean {
+  return adapter.isReady(surface)
+}
 
 // ======================================================
 // DEFAULTS
@@ -117,40 +157,6 @@ export function getPublishState(key: TvContentKey): PublishState {
   }
 }
 
-/** Structural equality for content objects (key order independent). */
-export function isSameContent(a: unknown, b: unknown): boolean {
-  if (a === b) {
-    return true
-  }
-
-  if (
-    typeof a !== "object" ||
-    typeof b !== "object" ||
-    a === null ||
-    b === null
-  ) {
-    return false
-  }
-
-  if (Array.isArray(a) !== Array.isArray(b)) {
-    return false
-  }
-
-  const aKeys = Object.keys(a)
-  const bKeys = Object.keys(b)
-
-  if (aKeys.length !== bKeys.length) {
-    return false
-  }
-
-  return aKeys.every((key) =>
-    isSameContent(
-      (a as Record<string, unknown>)[key],
-      (b as Record<string, unknown>)[key]
-    )
-  )
-}
-
 // ======================================================
 // SUBSCRIPTIONS (published content only)
 // ======================================================
@@ -176,8 +182,9 @@ function listenerCount() {
 }
 
 /**
- * Run `listener` whenever the PUBLISHED value for `key` changes outside
- * this tab. Draft saves never trigger it. Read the new value with the
+ * Run `listener` whenever the PUBLISHED value for `key` changes (another
+ * tab for local; realtime/refetch for Supabase). Draft saves never trigger
+ * it. Read the new value with the
  * matching published getter.
  * Returns an unsubscribe function (usable directly as an effect cleanup).
  */
@@ -195,7 +202,7 @@ export function subscribe(
   keyListeners.add(listener)
 
   if (!detachAdapter) {
-    detachAdapter = adapter.subscribe(notify)
+    detachAdapter = adapter.subscribePublished(notify)
   }
 
   return () => {

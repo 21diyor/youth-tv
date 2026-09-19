@@ -3,6 +3,10 @@ import {
   type SupabaseClient,
 } from "@supabase/supabase-js"
 
+import type { Database } from "@/types/database"
+
+export type TvSupabaseClient = SupabaseClient<Database>
+
 // Browser Supabase client.
 //
 // Uses ONLY the publishable key: it is safe to ship to the browser because
@@ -12,7 +16,7 @@ import {
 // The client is created lazily, so the app keeps working on the local
 // backend (VITE_DATA_BACKEND=local) even when these variables are not set.
 
-let client: SupabaseClient | null = null
+let client: TvSupabaseClient | null = null
 
 function requireEnv(
   name: string,
@@ -27,7 +31,7 @@ function requireEnv(
   return value
 }
 
-export function getSupabase(): SupabaseClient {
+export function getSupabase(): TvSupabaseClient {
   if (client) {
     return client
   }
@@ -51,7 +55,7 @@ export function getSupabase(): SupabaseClient {
     )
   }
 
-  client = createClient(url, publishableKey, {
+  client = createClient<Database>(url, publishableKey, {
     auth: {
       persistSession: true,
       autoRefreshToken: true,

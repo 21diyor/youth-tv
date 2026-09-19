@@ -1,12 +1,13 @@
 import { AdminGate } from "@/auth/AdminGate"
 import { AuthProvider } from "@/auth/AuthProvider"
+import { StoreGate } from "@/data/StoreGate"
 import { Slideshow } from "@/Slideshow"
 
 function App() {
   const path = window.location.pathname
 
-  // Only /admin uses Supabase Auth. The TV route stays public (and does not
-  // touch Supabase at all) until TV Viewer accounts exist.
+  // /admin: Supabase Auth first, then the admin content store (inside
+  // AdminGate). The TV route does not require login in the frontend yet.
   if (path.startsWith("/admin")) {
     return (
       <AuthProvider>
@@ -15,7 +16,11 @@ function App() {
     )
   }
 
-  return <Slideshow />
+  return (
+    <StoreGate surface="tv">
+      <Slideshow />
+    </StoreGate>
+  )
 }
 
 export default App

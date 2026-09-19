@@ -4,6 +4,7 @@ import { AdminPage } from "@/admin/AdminPage"
 import { useAuth } from "@/auth/authContext"
 import { LoginPage } from "@/auth/LoginPage"
 import { ADMIN_ROLES } from "@/auth/roles"
+import { StoreGate } from "@/data/StoreGate"
 
 import { Button } from "@/components/ui/button"
 
@@ -106,5 +107,10 @@ export function AdminGate() {
     )
   }
 
-  return <AdminPage />
+  // Auth resolved → load admin content (drafts + published), then render.
+  return (
+    <StoreGate surface="admin" userKey={auth.user?.id ?? null}>
+      <AdminPage />
+    </StoreGate>
+  )
 }
