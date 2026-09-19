@@ -160,14 +160,22 @@ function publishErrorMessage(error: PostgrestError | null): string {
   return "E’lon qilishda xatolik yuz berdi." + unchanged
 }
 
-class LoadError extends Error {}
+class LoadError extends Error {
+  /** True only when Supabase could not be reached at all. */
+  readonly network: boolean
+
+  constructor(message: string, network = false) {
+    super(message)
+    this.network = network
+  }
+}
 
 function loadError(
   surface: TvSurface,
   error: PostgrestError | null
 ): LoadError {
   if (error && isNetworkError(error)) {
-    return new LoadError(NETWORK_MESSAGE)
+    return new LoadError(NETWORK_MESSAGE, true)
   }
 
   if (surface === "tv") {
@@ -270,6 +278,12 @@ async function refetchPublished(reason: string) {
     const rows = await fetchPublished(surface)
 
     CONTENT_KEYS.forEach((key) => applyPublished(key, rows[key], true))
+    servingSnapshot = false
+
+    // Supabase is reachable again: make sure live updates are wired up.
+    if (triggersInstalled) {
+      ensureChannel()
+    }
   } catch (error) {
     // Keep showing what we have; the next trigger will try again.
     console.warn(`[supabase] published refetch (${reason}) failed`, error)
@@ -284,6 +298,23 @@ type Snapshot = {
   version: 1
   savedAt: string
   published: Record<TvContentKey, unknown>
+}
+
+/** True while the TV is showing the device snapshot, not live data. */
+let servingSnapshot = false
+
+/** A complete, readable published snapshot exists on this device. */
+export function hasTvSnapshot(): boolean {
+  return loadSnapshot() !== null
+}
+
+/** Remove the TV snapshot (deliberate sign-out / device reset). */
+export function clearTvSnapshot() {
+  try {
+    localStorage.removeItem(SNAPSHOT_KEY)
+  } catch {
+    // Storage unavailable: nothing to clear.
+  }
 }
 
 function saveSnapshot() {
@@ -328,13 +359,28 @@ function loadSnapshot(): Snapshot | null {
 
 let channel: RealtimeChannel | null = null
 let refetchOnNextSubscribe = false
+let triggersInstalled = false
 
-function startLiveUpdates(fromSnapshot: boolean) {
-  if (channel) {
+/**
+ * The channel still exists in the realtime client. realtime-js closes and
+ * REMOVES a channel whose join keeps failing (e.g. a long outage), so a
+ * held reference alone does not mean live updates are still wired up.
+ */
+function channelAlive(): boolean {
+  return channel !== null && getSupabase().getChannels().includes(channel)
+}
+
+/** Create the single published-content channel if it is missing/dead. */
+function ensureChannel() {
+  if (channelAlive()) {
     return
   }
 
-  refetchOnNextSubscribe = fromSnapshot
+  if (channel) {
+    // Re-creating after the old channel died: updates may have been missed
+    // in between, so refetch as soon as the new one joins.
+    refetchOnNextSubscribe = true
+  }
 
   const supabase = getSupabase()
   let next = supabase.channel("tv-published-content")
@@ -378,14 +424,28 @@ function startLiveUpdates(fromSnapshot: boolean) {
       console.warn(`[supabase] realtime channel ${status}; will rejoin`)
     }
   })
+}
 
-  window.addEventListener("online", () => {
-    void refetchPublished("online")
-  })
+function startLiveUpdates(fromSnapshot: boolean) {
+  if (!channel) {
+    refetchOnNextSubscribe = fromSnapshot
+  }
 
-  window.setInterval(() => {
-    void refetchPublished("safety interval")
-  }, SAFETY_REFETCH_MS)
+  ensureChannel()
+
+  // Page-lifetime triggers, installed once. Each refetch also repairs the
+  // channel if realtime-js removed it.
+  if (!triggersInstalled) {
+    triggersInstalled = true
+
+    window.addEventListener("online", () => {
+      void refetchPublished("online")
+    })
+
+    window.setInterval(() => {
+      void refetchPublished("safety interval")
+    }, SAFETY_REFETCH_MS)
+  }
 }
 
 // ======================================================
@@ -412,8 +472,13 @@ async function load(surface: TvSurface): Promise<TvInitResult> {
 
     return { source: "network" }
   } catch (error) {
-    // TV: fall back to the last published snapshot on this device.
-    if (surface === "tv") {
+    // TV: fall back to the last published snapshot on this device — but
+    // ONLY when Supabase was unreachable. A real server answer (permission
+    // denied, expired session, no role) never unlocks the snapshot.
+    const networkFailure =
+      error instanceof LoadError ? error.network : error instanceof TypeError
+
+    if (surface === "tv" && networkFailure) {
       const snapshot = loadSnapshot()
 
       if (snapshot) {
@@ -424,6 +489,7 @@ async function load(surface: TvSurface): Promise<TvInitResult> {
             snapshot.published[key]
         }
 
+        servingSnapshot = true
         readySurfaces.add("tv")
         startLiveUpdates(true)
 
@@ -436,6 +502,23 @@ async function load(surface: TvSurface): Promise<TvInitResult> {
       ? error
       : loadError(surface, error as PostgrestError)
   }
+}
+
+/**
+ * After the TV's authorization was revalidated online: if it is still
+ * showing the offline snapshot, fetch live published content now instead
+ * of waiting for the next reconnect/online/interval trigger.
+ */
+export function refreshTvIfServingSnapshot(): Promise<void> {
+  if (servingSnapshot) {
+    return refetchPublished("revalidated")
+  }
+
+  if (triggersInstalled) {
+    ensureChannel()
+  }
+
+  return Promise.resolve()
 }
 
 // ======================================================

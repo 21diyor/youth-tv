@@ -8,7 +8,10 @@ import {
   localAdapter,
   localStorageKeys,
 } from "@/data/adapters/local"
-import { supabaseAdapter } from "@/data/adapters/supabase"
+import {
+  refreshTvIfServingSnapshot,
+  supabaseAdapter,
+} from "@/data/adapters/supabase"
 import { isSameContent } from "@/data/contentEquality"
 
 import type {
@@ -88,6 +91,16 @@ export function initTvStore(options: {
 /** True when getters can be used right now (always true for local). */
 export function isTvStoreReady(surface: TvSurface): boolean {
   return adapter.isReady(surface)
+}
+
+/**
+ * TV authorization was just confirmed online: if the TV is still showing
+ * the offline snapshot, load live published content now. No-op otherwise.
+ */
+export function revalidateTvContent(): Promise<void> {
+  return adapter.name === "supabase"
+    ? refreshTvIfServingSnapshot()
+    : Promise.resolve()
 }
 
 // ======================================================

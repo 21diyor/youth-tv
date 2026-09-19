@@ -65,3 +65,31 @@ export function getSupabase(): TvSupabaseClient {
 
   return client
 }
+
+/**
+ * READ-ONLY: the user id of the session supabase-js has persisted in this
+ * browser (its default "sb-<project-ref>-auth-token" key), or null.
+ *
+ * Needed for offline boot: when the stored access token has expired and
+ * cannot be refreshed without network, supabase-js reports no session but
+ * keeps the stored one. supabase-js removes this key on sign-out and when
+ * the server rejects the refresh token. Never writes; never returns tokens.
+ */
+export function getPersistedSessionUserId(): string | null {
+  const url = import.meta.env.VITE_SUPABASE_URL
+
+  if (!url) {
+    return null
+  }
+
+  try {
+    const ref = new URL(url).hostname.split(".")[0]
+    const raw = localStorage.getItem(`sb-${ref}-auth-token`)
+    const parsed = raw ? (JSON.parse(raw) as { user?: { id?: unknown } }) : null
+    const id = parsed?.user?.id
+
+    return typeof id === "string" ? id : null
+  } catch {
+    return null
+  }
+}

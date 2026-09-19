@@ -12,6 +12,8 @@ export type AuthContextValue = {
   loading: boolean
   /** Admin-safe message when roles could not be loaded. */
   rolesError: string | null
+  /** True when the role lookup failed because Supabase was unreachable. */
+  rolesErrorNetwork: boolean
   /** Admin-safe message when the Supabase client is not configured. */
   configError: string | null
   /** Resolves to null on success, or an admin-safe error message. */

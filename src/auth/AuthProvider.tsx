@@ -64,6 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [roles, setRoles] = useState<AppRole[]>([])
   const [rolesUserId, setRolesUserId] = useState<string | null>(null)
   const [rolesError, setRolesError] = useState<string | null>(null)
+  const [rolesErrorNetwork, setRolesErrorNetwork] = useState(false)
   const [rolesRequest, setRolesRequest] = useState(0)
 
   // onAuthStateChange emits INITIAL_SESSION first, so it also covers the
@@ -112,6 +113,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setRolesError(
             "Foydalanuvchi huquqlarini yuklab bo‘lmadi. Qayta urinib ko‘ring."
           )
+          // No HTTP status/code at all = Supabase was not reached.
+          setRolesErrorNetwork(
+            !navigator.onLine ||
+              (!error.code && /fetch|network|load failed/i.test(error.message))
+          )
         } else {
           setRoles(
             (data ?? [])
@@ -119,6 +125,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               .filter(isAppRole)
           )
           setRolesError(null)
+          setRolesErrorNetwork(false)
         }
 
         setRolesUserId(userId)
@@ -176,6 +183,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       roles: currentRoles,
       loading,
       rolesError: rolesReady ? rolesError : null,
+      rolesErrorNetwork: rolesReady && rolesError !== null && rolesErrorNetwork,
       configError,
       signIn,
       signOut,
@@ -188,6 +196,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loading,
       rolesReady,
       rolesError,
+      rolesErrorNetwork,
       configError,
       signIn,
       signOut,
