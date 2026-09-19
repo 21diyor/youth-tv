@@ -1,13 +1,33 @@
 # Supabase migration — YIA TV platform
 
-Status: **nothing applied.** `VITE_DATA_BACKEND=local` remains the default.
+Status: **migration 000001 applied; 000002 not applied.**
+The app still runs on `VITE_DATA_BACKEND=local`.
 
-## Migration files (not yet applied)
+## Supabase project
 
-| File | Contents | Apply at step |
+| | |
+|---|---|
+| Project | `yia-tv-platform` (dedicated — shares nothing with any other project) |
+| Project ref | `ymztqfzujdwfkqrsqzyu` |
+| Organization | YRO |
+| Region | `eu-central-1` (Frankfurt) |
+| API URL | `https://ymztqfzujdwfkqrsqzyu.supabase.co` |
+| Frontend key | publishable key only, in git-ignored `.env.local` (see `.env.example`) |
+
+## Migration files
+
+| File | Contents | Status |
 |---|---|---|
-| `migrations/20260919000001_tv_content_draft_publish.sql` | enums, `user_roles`, role helpers, 4 draft/published content tables, audit log, seed fallback, triggers, publish RPCs, RLS, grants, realtime publication | 3 |
-| `migrations/20260919000002_tv_media_storage.sql` | private `tv-media` bucket + storage policies | 9 |
+| `migrations/20260919000001_tv_content_draft_publish.sql` | enums, `user_roles`, role helpers, 4 draft/published content tables, audit log, seed fallback, triggers, publish RPCs, RLS, grants, realtime publication | **Applied 2026-09-19** (remote version `20260919105811`, name `tv_content_draft_publish`; content checksum identical to this file). The file's header still reads "PROPOSED — NOT APPLIED" because applied SQL is kept byte-for-byte unchanged. |
+| `migrations/20260919000002_tv_media_storage.sql` | private `tv-media` bucket + storage policies | **Not applied** — planned for step 9 |
+
+## Auth
+
+- Public sign-ups: disabled. Email confirmation: disabled. Site URL: `http://localhost:5173`.
+- Accounts are created by an administrator in the Supabase Dashboard
+  (Authentication → Users → Add user), passwords entered there — never in chat or code.
+- First Super Admin created and assigned `super_admin` on 2026-09-19 (step 4A).
+- Press Admin, Appeals Admin and TV accounts (`tv-1`, `tv-2`, `tv-3`): not created yet.
 
 ## Sequence
 
@@ -15,9 +35,10 @@ Status: **nothing applied.** `VITE_DATA_BACKEND=local` remains the default.
 |---|---|---|
 | 0 | Git baseline, `@supabase/supabase-js`, `.env.example` | done |
 | 1 | localStorage behind adapter, `subscribe()`, async saves, save errors | done |
-| 2 | Draft/publish in the frontend on the **local** adapter: draft keys, `Saqlash` = save draft, outline `E’lon qilish` button, "E’lon qilinmagan o‘zgarishlar bor" status. Existing published localStorage keys unchanged, so the TV keeps showing live content | next |
-| 3 | Apply `…000001` (after explicit approval); run security/performance advisors | |
-| 4 | Create Auth users (super admin, press admin, appeals admin, `tv-1`, `tv-2`, `tv-3`); bootstrap `user_roles`; disable public sign-ups | |
+| 2 | Draft/publish in the frontend on the **local** adapter: draft keys, `Saqlash` = save draft, outline `E’lon qilish` button, "E’lon qilinmagan o‘zgarishlar bor" status. Existing published localStorage keys unchanged, so the TV keeps showing live content | done |
+| 3 | Create dedicated project `yia-tv-platform`; apply `…000001`; run security/performance advisors | done (2026-09-19) |
+| 4A | First Super Admin account + `super_admin` role; disable public sign-ups; `src/lib/supabase.ts` client (not yet used) | done (2026-09-19) |
+| 4B | Create Press Admin, Appeals Admin, `tv-1`, `tv-2`, `tv-3`; assign roles | |
 | 5 | Implement Supabase adapter (published reads, draft saves, publish RPCs, published-only realtime) — tested in development only; production stays `local` | |
 | 6 | Auth gate + role-filtered admin in the frontend | |
 | 7 | **One-time localStorage → Supabase initial import (mandatory gate — see below)** | |
