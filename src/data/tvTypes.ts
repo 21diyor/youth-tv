@@ -6,6 +6,8 @@ export type PresidentContent = {
   position: string
   quote: string
   sourceDate: string
+  /** tv-media storage path (Supabase only); null/absent = bundled portrait. */
+  portraitPath?: string | null
 }
 
 export type EmployeeContent = {
@@ -16,6 +18,8 @@ export type EmployeeContent = {
   department: string
   recognition: string
   achievements: string[]
+  /** tv-media storage path (Supabase only); null/absent = placeholder. */
+  photoPath?: string | null
 }
 
 export type AppealsContent = {

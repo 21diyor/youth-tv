@@ -72,6 +72,7 @@ function toPresident(row: PresidentRow): PresidentContent {
     position: row.position,
     quote: row.quote,
     sourceDate: row.source_date,
+    portraitPath: row.portrait_path,
   }
 }
 
@@ -98,6 +99,7 @@ function toEmployee(row: EmployeeRow): EmployeeContent {
     department: row.department,
     recognition: row.recognition,
     achievements: asArray<string>(row.achievements),
+    photoPath: row.photo_path,
   }
 }
 
@@ -219,6 +221,11 @@ export async function updateDraftRow<K extends TvContentKey>(
           position: v.position,
           quote: v.quote,
           source_date: v.sourceDate,
+          // Only written when the editor carries it; the file itself was
+          // already uploaded to tv-media (draft row only — publish copies it).
+          ...(v.portraitPath !== undefined
+            ? { portrait_path: v.portraitPath }
+            : {}),
         })
         .eq("status", "draft")
         .select()
@@ -253,6 +260,7 @@ export async function updateDraftRow<K extends TvContentKey>(
           department: v.department,
           recognition: v.recognition,
           achievements: v.achievements as unknown as Json,
+          ...(v.photoPath !== undefined ? { photo_path: v.photoPath } : {}),
         })
         .eq("status", "draft")
         .select()

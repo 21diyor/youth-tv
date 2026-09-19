@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 
+import { useMediaUrl } from "@/data/media"
 import { commonData } from "@/data/tvData"
 
 import {
@@ -17,6 +18,10 @@ export function EmployeeOfMonthSlide() {
       setContent(getEmployeeContent())
     })
   }, [])
+
+  // Published photo from private storage; placeholder when absent.
+  const photo = useMediaUrl(content.photoPath)
+  const showPlaceholder = !photo.url && !photo.loading
 
   return (
     <main className="min-h-screen overflow-hidden bg-[#EEEEEC]">
@@ -49,28 +54,50 @@ export function EmployeeOfMonthSlide() {
           {/* MAIN CONTENT */}
           <section className="mt-[32px] grid min-h-0 flex-1 grid-cols-[0.82fr_1.18fr] gap-[58px]">
 
-            {/* PHOTO PLACEHOLDER */}
+            {/* PHOTO (published) / PLACEHOLDER */}
             <div className="relative min-h-0 overflow-hidden bg-[#E8E8E5]">
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="mx-auto flex h-[74px] w-[74px] items-center justify-center border border-neutral-300">
-                    <span className="text-[28px] font-light text-neutral-400">
-                      +
-                    </span>
+              {photo.url && (
+                <>
+                  <img
+                    src={photo.url}
+                    alt={content.name}
+                    className="absolute inset-0 h-full w-full object-cover object-top"
+                  />
+
+                  <div className="absolute inset-x-0 bottom-0 h-[120px] bg-gradient-to-t from-black/30 to-transparent" />
+                </>
+              )}
+
+              {showPlaceholder && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="mx-auto flex h-[74px] w-[74px] items-center justify-center border border-neutral-300">
+                      <span className="text-[28px] font-light text-neutral-400">
+                        +
+                      </span>
+                    </div>
+
+                    <p className="mt-[18px] text-[14px] font-medium text-neutral-500">
+                      Xodim rasmi
+                    </p>
+
+                    <p className="mt-[5px] text-[12px] text-neutral-400">
+                      Portret keyin joylashtiriladi
+                    </p>
                   </div>
-
-                  <p className="mt-[18px] text-[14px] font-medium text-neutral-500">
-                    Xodim rasmi
-                  </p>
-
-                  <p className="mt-[5px] text-[12px] text-neutral-400">
-                    Portret keyin joylashtiriladi
-                  </p>
                 </div>
-              </div>
+              )}
 
-              <div className="absolute bottom-[28px] left-[30px] right-[30px] border-t border-neutral-300 pt-[12px]">
-                <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+              <div
+                className={`absolute bottom-[28px] left-[30px] right-[30px] border-t pt-[12px] ${
+                  photo.url ? "border-white/30" : "border-neutral-300"
+                }`}
+              >
+                <span
+                  className={`text-[10px] font-semibold uppercase tracking-[0.18em] ${
+                    photo.url ? "text-white" : "text-neutral-500"
+                  }`}
+                >
                   {commonData.agencyName}
                 </span>
               </div>

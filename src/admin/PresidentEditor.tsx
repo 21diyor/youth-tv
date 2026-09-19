@@ -2,15 +2,16 @@ import { useState } from "react"
 
 import presidentImage from "@/assets/president.jpg"
 
+import { uploadPresidentPortrait, useMediaUrl } from "@/data/media"
 import {
   getPresidentDraft,
   type PresidentContent,
 } from "@/data/tvStore"
 
 import { DraftPublishActions } from "@/admin/DraftPublishActions"
+import { ImageUploadControl } from "@/admin/ImageUploadControl"
 import { useDraftPublish } from "@/admin/useDraftPublish"
 
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -24,15 +25,25 @@ export function PresidentEditor() {
   const [sourceDate, setSourceDate] = useState(
     initialData.sourceDate
   )
+  // Storage path of the draft portrait (undefined on the local backend).
+  const [portraitPath, setPortraitPath] = useState(
+    initialData.portraitPath
+  )
 
   const draft: PresidentContent = {
     name,
     position,
     quote,
     sourceDate,
+    ...(portraitPath !== undefined ? { portraitPath } : {}),
   }
 
   const draftPublish = useDraftPublish("president", draft, true)
+
+  const portrait = useMediaUrl(portraitPath)
+  // While a stored portrait loads, show nothing rather than the fallback.
+  const portraitSrc =
+    portrait.url ?? (portrait.loading ? undefined : presidentImage)
 
   return (
     <div>
@@ -155,7 +166,7 @@ export function PresidentEditor() {
           <div className="p-[26px]">
             <div className="overflow-hidden bg-neutral-100">
               <img
-                src={presidentImage}
+                src={portraitSrc}
                 alt={name}
                 className="aspect-[4/5] w-full object-cover object-top"
               />
@@ -172,16 +183,11 @@ export function PresidentEditor() {
             </div>
 
             <div className="mt-[18px] border-t border-neutral-200 pt-[16px]">
-              <Button
-                variant="outline"
-                className="w-full"
-              >
-                Rasmni almashtirish
-              </Button>
-
-              <p className="mt-[9px] text-[10px] leading-[1.5] text-neutral-400">
-                Rasm yuklash funksiyasini keyingi bosqichda ulaymiz.
-              </p>
+              <ImageUploadControl
+                upload={uploadPresidentPortrait}
+                onUploaded={setPortraitPath}
+                hasPendingImage={draftPublish.isDirty && portraitPath !== initialData.portraitPath}
+              />
             </div>
           </div>
         </section>

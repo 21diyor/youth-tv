@@ -18,6 +18,27 @@ export type TvSupabaseClient = SupabaseClient<Database>
 
 let client: TvSupabaseClient | null = null
 
+/**
+ * Private media must never land in the browser's HTTP cache: a cached
+ * response could otherwise be served to a later, signed-out request in the
+ * same browser. Storage object requests are fetched with "no-store"; the
+ * app keeps images in memory (blob URLs) instead.
+ */
+const privateStorageFetch: typeof fetch = (input, init) => {
+  const url =
+    typeof input === "string"
+      ? input
+      : input instanceof URL
+        ? input.href
+        : input.url
+
+  if (url.includes("/storage/v1/object/")) {
+    return fetch(input, { ...init, cache: "no-store" })
+  }
+
+  return fetch(input, init)
+}
+
 function requireEnv(
   name: string,
   value: string | undefined
@@ -60,6 +81,9 @@ export function getSupabase(): TvSupabaseClient {
       persistSession: true,
       autoRefreshToken: true,
       detectSessionInUrl: true,
+    },
+    global: {
+      fetch: privateStorageFetch,
     },
   })
 

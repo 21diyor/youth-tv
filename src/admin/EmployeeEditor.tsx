@@ -1,11 +1,13 @@
 import { useState } from "react"
 
+import { uploadEmployeePhoto, useMediaUrl } from "@/data/media"
 import {
   getEmployeeDraft,
   type EmployeeContent,
 } from "@/data/tvStore"
 
 import { DraftPublishActions } from "@/admin/DraftPublishActions"
+import { ImageUploadControl } from "@/admin/ImageUploadControl"
 import { useDraftPublish } from "@/admin/useDraftPublish"
 
 import { Input } from "@/components/ui/input"
@@ -28,6 +30,8 @@ export function EmployeeEditor() {
   const [achievements, setAchievements] = useState(
     initialData.achievements
   )
+  // Storage path of the draft photo (undefined on the local backend).
+  const [photoPath, setPhotoPath] = useState(initialData.photoPath)
 
   const draft: EmployeeContent = {
     month,
@@ -37,9 +41,12 @@ export function EmployeeEditor() {
     department,
     recognition,
     achievements,
+    ...(photoPath !== undefined ? { photoPath } : {}),
   }
 
   const draftPublish = useDraftPublish("employee", draft, true)
+
+  const photo = useMediaUrl(photoPath)
 
   const updateAchievement = (
     index: number,
@@ -226,6 +233,47 @@ export function EmployeeEditor() {
         </section>
 
       </div>
+
+      {/* PHOTO */}
+      <section className="mt-[28px] border border-neutral-200 bg-white">
+        <div className="border-b border-neutral-200 px-[26px] py-[20px]">
+          <h4 className="text-[15px] font-semibold">
+            Xodim rasmi
+          </h4>
+
+          <p className="mt-[3px] text-[11px] text-neutral-400">
+            TV slaydida ko‘rsatiladigan portret
+          </p>
+        </div>
+
+        <div className="grid grid-cols-[180px_1fr] items-end gap-[26px] p-[26px]">
+          <div className="relative aspect-[4/5] w-full overflow-hidden bg-[#E8E8E5]">
+            {photo.url ? (
+              <img
+                src={photo.url}
+                alt={name}
+                className="h-full w-full object-cover object-top"
+              />
+            ) : (
+              !photo.loading && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-[11px] font-medium text-neutral-500">
+                    Xodim rasmi
+                  </span>
+                </div>
+              )
+            )}
+          </div>
+
+          <div className="max-w-[320px]">
+            <ImageUploadControl
+              upload={uploadEmployeePhoto}
+              onUploaded={setPhotoPath}
+              hasPendingImage={draftPublish.isDirty && photoPath !== initialData.photoPath}
+            />
+          </div>
+        </div>
+      </section>
 
       {/* PREVIEW */}
       <section className="mt-[28px] border border-neutral-200 bg-white px-[30px] py-[26px]">

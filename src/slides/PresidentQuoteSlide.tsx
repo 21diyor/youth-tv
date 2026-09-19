@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 
 import presidentImage from "@/assets/president.jpg"
 
+import { useMediaUrl } from "@/data/media"
 import { commonData } from "@/data/tvData"
 
 import {
@@ -20,6 +21,12 @@ export function PresidentQuoteSlide() {
     })
   }, [])
 
+  // Published portrait from private storage; bundled photo as fallback.
+  // While a stored portrait is loading, keep the photo area empty.
+  const portrait = useMediaUrl(content.portraitPath)
+  const portraitSrc =
+    portrait.url ?? (portrait.loading ? null : presidentImage)
+
   return (
     <main className="min-h-screen overflow-hidden bg-[#EEEEEC]">
       <div className="mx-auto aspect-video w-full max-w-[1920px] overflow-hidden bg-[#FAFAF9] text-[#171717]">
@@ -27,11 +34,13 @@ export function PresidentQuoteSlide() {
 
           {/* LEFT — PRESIDENT PHOTO */}
           <section className="relative h-full overflow-hidden bg-[#E7E7E4]">
-            <img
-              src={presidentImage}
-              alt={content.name}
-              className="h-full w-full object-cover object-top"
-            />
+            {portraitSrc && (
+              <img
+                src={portraitSrc}
+                alt={content.name}
+                className="h-full w-full object-cover object-top"
+              />
+            )}
 
             <div className="absolute inset-x-0 bottom-0 h-[150px] bg-gradient-to-t from-black/30 to-transparent" />
 
