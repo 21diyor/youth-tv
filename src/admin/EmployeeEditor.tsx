@@ -1,18 +1,19 @@
 import { useState } from "react"
 
 import {
-  getEmployeeContent,
-  getSaveErrorMessage,
-  saveEmployeeContent,
+  getEmployeeDraft,
+  type EmployeeContent,
 } from "@/data/tvStore"
 
-import { Button } from "@/components/ui/button"
+import { DraftPublishActions } from "@/admin/DraftPublishActions"
+import { useDraftPublish } from "@/admin/useDraftPublish"
+
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 
 export function EmployeeEditor() {
-  const initialData = getEmployeeContent()
+  const [initialData] = useState(getEmployeeDraft)
 
   const [month, setMonth] = useState(initialData.month)
   const [year, setYear] = useState(String(initialData.year))
@@ -28,9 +29,17 @@ export function EmployeeEditor() {
     initialData.achievements
   )
 
-  const [saved, setSaved] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [saveError, setSaveError] = useState<string | null>(null)
+  const draft: EmployeeContent = {
+    month,
+    year: Number(year),
+    name,
+    position,
+    department,
+    recognition,
+    achievements,
+  }
+
+  const draftPublish = useDraftPublish("employee", draft, true)
 
   const updateAchievement = (
     index: number,
@@ -41,38 +50,6 @@ export function EmployeeEditor() {
         itemIndex === index ? value : item
       )
     )
-  }
-
-  const handleSave = async () => {
-    if (saving) {
-      return
-    }
-
-    setSaving(true)
-    setSaveError(null)
-
-    try {
-      await saveEmployeeContent({
-        month,
-        year: Number(year),
-        name,
-        position,
-        department,
-        recognition,
-        achievements,
-      })
-    } catch (error) {
-      setSaveError(getSaveErrorMessage(error))
-      return
-    } finally {
-      setSaving(false)
-    }
-
-    setSaved(true)
-
-    window.setTimeout(() => {
-      setSaved(false)
-    }, 2000)
   }
 
   return (
@@ -94,27 +71,7 @@ export function EmployeeEditor() {
           </p>
         </div>
 
-        <div className="flex items-center gap-[12px]">
-          {saved && (
-            <span className="text-[12px] font-medium text-emerald-600">
-              Saqlandi
-            </span>
-          )}
-
-          {saveError && (
-            <span className="text-[12px] font-medium text-red-600">
-              {saveError}
-            </span>
-          )}
-
-          <Button
-            onClick={handleSave}
-            disabled={saving}
-            className="bg-[#1D4ED8] hover:bg-[#1D4ED8]/90"
-          >
-            Saqlash
-          </Button>
-        </div>
+        <DraftPublishActions state={draftPublish} />
       </div>
 
       <div className="mt-[34px] grid grid-cols-[1fr_0.78fr] gap-[28px]">

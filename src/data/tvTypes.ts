@@ -56,6 +56,9 @@ export type TvContentMap = {
 
 export type TvContentKey = keyof TvContentMap
 
+/** "published" is what the TVs show; "draft" is what admins edit. */
+export type ContentVersion = "draft" | "published"
+
 // ======================================================
 // PERSISTENCE ADAPTER CONTRACT
 // ======================================================
@@ -64,23 +67,34 @@ export interface TvDataAdapter {
   readonly name: "local" | "supabase"
 
   /**
-   * Return the currently persisted value, or null when nothing is stored
-   * (the store then falls back to the defaults in tvData.ts).
+   * Return the stored value of one version, or null when that version has
+   * never been stored (the store then falls back: draft → published →
+   * tvData.ts defaults).
    */
-  read<K extends TvContentKey>(key: K): TvContentMap[K] | null
+  read<K extends TvContentKey>(
+    key: K,
+    version: ContentVersion
+  ): TvContentMap[K] | null
 
   /**
-   * Persist a value. Resolves once saved; rejects with an Error whose
-   * message is safe to show to the admin.
+   * Save the draft only. Never changes published content and never
+   * notifies TV subscribers. Rejects with an admin-safe Error message.
    */
-  write<K extends TvContentKey>(
+  saveDraft<K extends TvContentKey>(
     key: K,
     value: TvContentMap[K]
   ): Promise<void>
 
   /**
-   * Report keys changed outside this browser tab (another tab today,
-   * realtime later). Returns an unsubscribe function.
+   * Copy the saved draft into the published version. Rejects with an
+   * admin-safe Error message; on failure published content is unchanged.
+   */
+  publish(key: TvContentKey): Promise<void>
+
+  /**
+   * Report PUBLISHED changes made outside this browser tab (another tab
+   * today, realtime later). Draft changes are never reported.
+   * Returns an unsubscribe function.
    */
   subscribe(onChange: (key: TvContentKey) => void): () => void
 }

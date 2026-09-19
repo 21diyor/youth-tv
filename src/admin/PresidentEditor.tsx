@@ -3,10 +3,12 @@ import { useState } from "react"
 import presidentImage from "@/assets/president.jpg"
 
 import {
-  getPresidentContent,
-  getSaveErrorMessage,
-  savePresidentContent,
+  getPresidentDraft,
+  type PresidentContent,
 } from "@/data/tvStore"
+
+import { DraftPublishActions } from "@/admin/DraftPublishActions"
+import { useDraftPublish } from "@/admin/useDraftPublish"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -14,7 +16,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 
 export function PresidentEditor() {
-  const initialData = getPresidentContent()
+  const [initialData] = useState(getPresidentDraft)
 
   const [name, setName] = useState(initialData.name)
   const [position, setPosition] = useState(initialData.position)
@@ -23,38 +25,14 @@ export function PresidentEditor() {
     initialData.sourceDate
   )
 
-  const [saved, setSaved] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [saveError, setSaveError] = useState<string | null>(null)
-
-  const handleSave = async () => {
-    if (saving) {
-      return
-    }
-
-    setSaving(true)
-    setSaveError(null)
-
-    try {
-      await savePresidentContent({
-        name,
-        position,
-        quote,
-        sourceDate,
-      })
-    } catch (error) {
-      setSaveError(getSaveErrorMessage(error))
-      return
-    } finally {
-      setSaving(false)
-    }
-
-    setSaved(true)
-
-    window.setTimeout(() => {
-      setSaved(false)
-    }, 2000)
+  const draft: PresidentContent = {
+    name,
+    position,
+    quote,
+    sourceDate,
   }
+
+  const draftPublish = useDraftPublish("president", draft, true)
 
   return (
     <div>
@@ -75,27 +53,7 @@ export function PresidentEditor() {
           </p>
         </div>
 
-        <div className="flex items-center gap-[12px]">
-          {saved && (
-            <span className="text-[12px] font-medium text-emerald-600">
-              Saqlandi
-            </span>
-          )}
-
-          {saveError && (
-            <span className="text-[12px] font-medium text-red-600">
-              {saveError}
-            </span>
-          )}
-
-          <Button
-            onClick={handleSave}
-            disabled={saving}
-            className="bg-[#1D4ED8] hover:bg-[#1D4ED8]/90"
-          >
-            Saqlash
-          </Button>
-        </div>
+        <DraftPublishActions state={draftPublish} />
       </div>
 
       {/* EDITOR */}

@@ -1,12 +1,13 @@
 import { useState } from "react"
 
 import {
-  getAppealsContent,
-  getSaveErrorMessage,
-  saveAppealsContent,
+  getAppealsDraft,
+  type AppealsContent,
 } from "@/data/tvStore"
 
-import { Button } from "@/components/ui/button"
+import { DraftPublishActions } from "@/admin/DraftPublishActions"
+import { useDraftPublish } from "@/admin/useDraftPublish"
+
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
@@ -15,7 +16,7 @@ function formatNumber(value: number) {
 }
 
 export function AppealsEditor() {
-  const initialData = getAppealsContent()
+  const [initialData] = useState(getAppealsDraft)
 
   const [total, setTotal] = useState(String(initialData.total))
   const [resolved, setResolved] = useState(
@@ -33,10 +34,6 @@ export function AppealsEditor() {
     initialData.categories
   )
   const [regions, setRegions] = useState(initialData.regions)
-
-  const [saved, setSaved] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [saveError, setSaveError] = useState<string | null>(null)
 
   const totalNumber = Number(total) || 0
   const resolvedNumber = Number(resolved) || 0
@@ -145,37 +142,21 @@ export function AppealsEditor() {
     )
   }
 
-  const handleSave = async () => {
-    if (!totalsMatch || saving) {
-      return
-    }
-
-    setSaving(true)
-    setSaveError(null)
-
-    try {
-      await saveAppealsContent({
-        total: totalNumber,
-        resolved: resolvedNumber,
-        inProgress: inProgressNumber,
-        overdue: overdueNumber,
-        trend,
-        categories,
-        regions,
-      })
-    } catch (error) {
-      setSaveError(getSaveErrorMessage(error))
-      return
-    } finally {
-      setSaving(false)
-    }
-
-    setSaved(true)
-
-    window.setTimeout(() => {
-      setSaved(false)
-    }, 2000)
+  const draft: AppealsContent = {
+    total: totalNumber,
+    resolved: resolvedNumber,
+    inProgress: inProgressNumber,
+    overdue: overdueNumber,
+    trend,
+    categories,
+    regions,
   }
+
+  const draftPublish = useDraftPublish(
+    "appeals",
+    draft,
+    totalsMatch
+  )
 
   return (
     <div>
@@ -197,27 +178,7 @@ export function AppealsEditor() {
           </p>
         </div>
 
-        <div className="flex items-center gap-[12px]">
-          {saved && (
-            <span className="text-[12px] font-medium text-emerald-600">
-              Saqlandi
-            </span>
-          )}
-
-          {saveError && (
-            <span className="text-[12px] font-medium text-red-600">
-              {saveError}
-            </span>
-          )}
-
-          <Button
-            onClick={handleSave}
-            disabled={!totalsMatch || saving}
-            className="bg-[#1D4ED8] hover:bg-[#1D4ED8]/90 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            Saqlash
-          </Button>
-        </div>
+        <DraftPublishActions state={draftPublish} />
       </div>
 
       {/* VALIDATION */}

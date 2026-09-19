@@ -1,17 +1,18 @@
 import { useState } from "react"
 
 import {
-  getSaveErrorMessage,
-  getSlideSettings,
-  saveSlideSettings,
+  getSlideSettingsDraft,
+  type SlideSettings,
 } from "@/data/tvStore"
 
-import { Button } from "@/components/ui/button"
+import { DraftPublishActions } from "@/admin/DraftPublishActions"
+import { useDraftPublish } from "@/admin/useDraftPublish"
+
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
 export function SlideSettingsEditor() {
-  const initialSettings = getSlideSettings()
+  const [initialSettings] = useState(getSlideSettingsDraft)
 
   const [interval, setInterval] = useState(
     String(initialSettings.intervalSeconds)
@@ -25,10 +26,6 @@ export function SlideSettingsEditor() {
 
   const [employeeEnabled, setEmployeeEnabled] =
     useState(initialSettings.employeeEnabled)
-
-  const [saved, setSaved] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [saveError, setSaveError] = useState<string | null>(null)
 
   const enabledCount = [
     presidentEnabled,
@@ -44,34 +41,14 @@ export function SlideSettingsEditor() {
   const canSave =
     enabledCount > 0 && intervalValid
 
-  const handleSave = async () => {
-    if (!canSave || saving) {
-      return
-    }
-
-    setSaving(true)
-    setSaveError(null)
-
-    try {
-      await saveSlideSettings({
-        intervalSeconds: intervalNumber,
-        presidentEnabled,
-        appealsEnabled,
-        employeeEnabled,
-      })
-    } catch (error) {
-      setSaveError(getSaveErrorMessage(error))
-      return
-    } finally {
-      setSaving(false)
-    }
-
-    setSaved(true)
-
-    window.setTimeout(() => {
-      setSaved(false)
-    }, 2000)
+  const draft: SlideSettings = {
+    intervalSeconds: intervalNumber,
+    presidentEnabled,
+    appealsEnabled,
+    employeeEnabled,
   }
+
+  const draftPublish = useDraftPublish("settings", draft, canSave)
 
   return (
     <div>
@@ -92,27 +69,7 @@ export function SlideSettingsEditor() {
           </p>
         </div>
 
-        <div className="flex items-center gap-[12px]">
-          {saved && (
-            <span className="text-[12px] font-medium text-emerald-600">
-              Saqlandi
-            </span>
-          )}
-
-          {saveError && (
-            <span className="text-[12px] font-medium text-red-600">
-              {saveError}
-            </span>
-          )}
-
-          <Button
-            onClick={handleSave}
-            disabled={!canSave || saving}
-            className="bg-[#1D4ED8] hover:bg-[#1D4ED8]/90 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            Saqlash
-          </Button>
-        </div>
+        <DraftPublishActions state={draftPublish} />
       </div>
 
       {/* INTERVAL */}

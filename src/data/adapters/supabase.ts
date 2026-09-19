@@ -2,16 +2,21 @@ import type { TvDataAdapter } from "@/data/tvTypes"
 
 // PLACEHOLDER — Supabase is not connected yet.
 //
-// Planned for the next migration steps:
-//   - load the *published* rows of president / appeals / employee /
-//     slide settings into an in-memory cache before first render
-//   - read() returns from that cache (synchronous, like the local adapter)
-//   - write() updates the *draft* row; publishing is a separate action
-//   - subscribe() is driven by a single realtime channel on the published
-//     tables, with a refetch on reconnect
+// Planned (see supabase/README.md):
+//   - read(key, "published") / read(key, "draft") from an in-memory cache
+//     loaded before first render (status = 'published' / 'draft' rows)
+//   - saveDraft() updates the draft row only
+//   - publish() calls the publish_<type>() RPC
+//   - subscribe() is driven by a realtime channel filtered to
+//     status=eq.published, with a refetch on reconnect
 //
 // Until then this adapter behaves as an empty, read-only backend:
 // the TV shows the defaults from tvData.ts and saves are rejected.
+
+const notConnected = () =>
+  new Error(
+    "Supabase hali ulanmagan. VITE_DATA_BACKEND=local dan foydalaning."
+  )
 
 export const supabaseAdapter: TvDataAdapter = {
   name: "supabase",
@@ -20,10 +25,12 @@ export const supabaseAdapter: TvDataAdapter = {
     return null
   },
 
-  async write() {
-    throw new Error(
-      "Supabase hali ulanmagan. VITE_DATA_BACKEND=local dan foydalaning."
-    )
+  async saveDraft() {
+    throw notConnected()
+  },
+
+  async publish() {
+    throw notConnected()
   },
 
   subscribe() {

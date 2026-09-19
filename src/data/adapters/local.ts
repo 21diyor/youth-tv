@@ -1,11 +1,12 @@
 import type {
+  ContentVersion,
   TvContentKey,
   TvContentMap,
   TvDataAdapter,
 } from "@/data/tvTypes"
 
-// Keys are unchanged from the original prototype so content that is
-// already saved in a browser keeps loading after this refactor.
+// Published keys are unchanged from the original prototype: they hold the
+// content the TVs are showing right now, so existing browsers keep working.
 export const localStorageKeys = {
   president: "youth-tv-president-content",
   employee: "youth-tv-employee-content",
@@ -13,7 +14,26 @@ export const localStorageKeys = {
   settings: "youth-tv-slide-settings",
 } as const satisfies Record<TvContentKey, string>
 
-function keyForStorageKey(
+// Draft keys are new. Absent until an admin first presses "Saqlash".
+export const localDraftStorageKeys = {
+  president: "youth-tv-president-draft",
+  employee: "youth-tv-employee-draft",
+  appeals: "youth-tv-appeals-draft",
+  settings: "youth-tv-slide-settings-draft",
+} as const satisfies Record<TvContentKey, string>
+
+function storageKeyFor(
+  key: TvContentKey,
+  version: ContentVersion
+) {
+  return version === "published"
+    ? localStorageKeys[key]
+    : localDraftStorageKeys[key]
+}
+
+// Only published keys map back to a content key, so draft saves in another
+// tab are ignored by TV subscribers.
+function publishedKeyForStorageKey(
   storageKey: string | null
 ): TvContentKey | null {
   const entry = Object.entries(localStorageKeys).find(
@@ -23,27 +43,33 @@ function keyForStorageKey(
   return entry ? (entry[0] as TvContentKey) : null
 }
 
+function readRaw(storageKey: string) {
+  const saved = localStorage.getItem(storageKey)
+
+  if (!saved) {
+    return null
+  }
+
+  try {
+    return JSON.parse(saved) as unknown
+  } catch {
+    return null
+  }
+}
+
 export const localAdapter: TvDataAdapter = {
   name: "local",
 
-  read<K extends TvContentKey>(key: K) {
-    const saved = localStorage.getItem(localStorageKeys[key])
-
-    if (!saved) {
-      return null
-    }
-
-    try {
-      return JSON.parse(saved) as TvContentMap[K]
-    } catch {
-      return null
-    }
+  read<K extends TvContentKey>(key: K, version: ContentVersion) {
+    return readRaw(storageKeyFor(key, version)) as
+      | TvContentMap[K]
+      | null
   },
 
-  async write(key, value) {
+  async saveDraft(key, value) {
     try {
       localStorage.setItem(
-        localStorageKeys[key],
+        localDraftStorageKeys[key],
         JSON.stringify(value)
       )
     } catch {
@@ -53,11 +79,30 @@ export const localAdapter: TvDataAdapter = {
     }
   },
 
+  async publish(key) {
+    // Copy the stored draft string verbatim, so published === draft.
+    const draft = localStorage.getItem(localDraftStorageKeys[key])
+
+    if (!draft) {
+      throw new Error(
+        "E’lon qilish uchun saqlangan qoralama topilmadi. Avval saqlang."
+      )
+    }
+
+    try {
+      localStorage.setItem(localStorageKeys[key], draft)
+    } catch {
+      throw new Error(
+        "E’lon qilib bo‘lmadi: brauzer xotirasi mavjud emas yoki to‘lgan. TV ekranidagi ma’lumot o‘zgarmadi."
+      )
+    }
+  },
+
   // The browser "storage" event fires only in *other* tabs of the same
   // browser profile — exactly the prototype's original sync behavior.
   subscribe(onChange) {
     const handleStorage = (event: StorageEvent) => {
-      const key = keyForStorageKey(event.key)
+      const key = publishedKeyForStorageKey(event.key)
 
       if (key) {
         onChange(key)
