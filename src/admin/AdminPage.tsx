@@ -230,42 +230,6 @@ function OverviewContent() {
   )
 }
 
-function EmptySection({
-  eyebrow,
-  title,
-  description,
-}: {
-  eyebrow: string
-  title: string
-  description: string
-}) {
-  return (
-    <div>
-      <p className="text-[11px] font-semibold uppercase tracking-[0.17em] text-neutral-400">
-        {eyebrow}
-      </p>
-
-      <h3 className="mt-[5px] text-[32px] font-semibold tracking-[-0.045em]">
-        {title}
-      </h3>
-
-      <p className="mt-[8px] max-w-[680px] text-[13px] leading-[1.6] text-neutral-500">
-        {description}
-      </p>
-
-      <div className="mt-[34px] border border-dashed border-neutral-300 bg-white px-[30px] py-[80px] text-center">
-        <p className="text-[14px] font-semibold text-neutral-500">
-          Boshqaruv paneli keyingi bosqichda qo‘shiladi
-        </p>
-
-        <p className="mt-[5px] text-[12px] text-neutral-400">
-          Ushbu bo‘lim uchun tahrirlash formalarini yaratamiz.
-        </p>
-      </div>
-    </div>
-  )
-}
-
 export function AdminPage() {
   const [activeSection, setActiveSection] =
     useState<Section>("overview")
