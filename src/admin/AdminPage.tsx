@@ -4,12 +4,29 @@ import { EmployeeEditor } from "@/admin/EmployeeEditor"
 import { AppealsEditor } from "@/admin/AppealsEditor"
 import { SlideSettingsEditor } from "@/admin/SlideSettingsEditor"
 
-type Section =
-  | "overview"
-  | "president"
-  | "appeals"
-  | "employee"
-  | "settings"
+import { useAuth } from "@/auth/authContext"
+import {
+  canSeeSection,
+  type AdminSection,
+} from "@/auth/roles"
+
+type Section = AdminSection
+
+// "mr.diyor7736@gmail.com" → "MD"; "admin@x.uz" → "AD".
+function initialsFromEmail(email: string | undefined): string {
+  const local = (email ?? "").split("@")[0] ?? ""
+  const parts = local
+    .split(/[._-]+/)
+    .map((part) => part.replace(/[^a-zA-Z]/g, ""))
+    .filter(Boolean)
+
+  const initials =
+    parts.length > 1
+      ? parts[0][0] + parts[1][0]
+      : (parts[0] ?? "").slice(0, 2)
+
+  return initials.toUpperCase() || "—"
+}
 
 const menuItems: {
   id: Section
@@ -231,12 +248,33 @@ function OverviewContent() {
 }
 
 export function AdminPage() {
-  const [activeSection, setActiveSection] =
-    useState<Section>("overview")
+  const { user, roles, signOut } = useAuth()
+
+  // Menu follows the user's roles (union across roles). RLS is the real
+  // protection; this only hides sections the user cannot act on.
+  const visibleItems = menuItems.filter((item) =>
+    canSeeSection(item.id, roles)
+  )
+
+  const [activeSection, setActiveSection] = useState<Section>(
+    () => visibleItems[0]?.id ?? "overview"
+  )
+
+  const [signingOut, setSigningOut] = useState(false)
 
   const currentItem =
-    menuItems.find((item) => item.id === activeSection) ??
+    visibleItems.find((item) => item.id === activeSection) ??
+    visibleItems[0] ??
     menuItems[0]
+
+  const showSection = (section: Section) =>
+    currentItem.id === section && canSeeSection(section, roles)
+
+  const handleSignOut = async () => {
+    setSigningOut(true)
+    await signOut()
+    setSigningOut(false)
+  }
 
   return (
     <main className="min-h-screen bg-[#F5F5F3] text-[#171717]">
@@ -255,8 +293,8 @@ export function AdminPage() {
           </div>
 
           <nav className="mt-[22px] space-y-[4px]">
-            {menuItems.map((item) => {
-              const active = activeSection === item.id
+            {visibleItems.map((item) => {
+              const active = currentItem.id === item.id
 
               return (
                 <button
@@ -321,8 +359,24 @@ export function AdminPage() {
                 TV ekranini ochish
               </a>
 
-              <div className="flex h-[36px] w-[36px] items-center justify-center bg-[#1D4ED8] text-[12px] font-semibold text-white">
-                SA
+              <button
+                type="button"
+                onClick={handleSignOut}
+                disabled={signingOut}
+                className="border border-neutral-200 bg-white px-[15px] py-[9px] text-[12px] font-semibold text-neutral-700 transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Chiqish
+              </button>
+
+              <span className="text-[12px] text-neutral-500">
+                {user?.email}
+              </span>
+
+              <div
+                title={user?.email}
+                className="flex h-[36px] w-[36px] items-center justify-center bg-[#1D4ED8] text-[12px] font-semibold text-white"
+              >
+                {initialsFromEmail(user?.email)}
               </div>
             </div>
           </header>
@@ -331,23 +385,23 @@ export function AdminPage() {
           <div className="p-[38px]">
             <div className="mx-auto max-w-[1500px]">
 
-              {activeSection === "overview" && (
+              {showSection("overview") && (
                 <OverviewContent />
               )}
 
-              {activeSection === "president" && (
+              {showSection("president") && (
                 <PresidentEditor />
                 )}
 
-              {activeSection === "appeals" && (
+              {showSection("appeals") && (
                 <AppealsEditor />
                 )}
 
-              {activeSection === "employee" && (
+              {showSection("employee") && (
                 <EmployeeEditor />
                 )}
 
-              {activeSection === "settings" && (
+              {showSection("settings") && (
                 <SlideSettingsEditor />
                 )}
 
