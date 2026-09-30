@@ -29,7 +29,10 @@ dist-ssr
 *.sw?
 
 .claude/
+.vercel/
 
 # Local archives
 *.rar
 *.zip
+.env*
+!.env.example

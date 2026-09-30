@@ -15,8 +15,8 @@ type GateState =
 
 /**
  * Renders children only once the content store is ready for `surface`.
- * Local backend: ready immediately (no extra frame). Supabase: plain canvas
- * while loading, restrained error state with retry on failure.
+ * TV can reuse a ready store. Admin always initializes for the current user
+ * before rendering. Failed loads show an error with a retry action.
  */
 export function StoreGate({
   surface,
@@ -28,7 +28,10 @@ export function StoreGate({
   children: ReactNode
 }) {
   const [state, setState] = useState<GateState>(() =>
-    isTvStoreReady(surface) ? { status: "ready" } : { status: "loading" }
+    // Admin initialization validates the user before exposing cached drafts.
+    surface === "tv" && isTvStoreReady(surface)
+      ? { status: "ready" }
+      : { status: "loading" }
   )
   const [attempt, setAttempt] = useState(0)
 

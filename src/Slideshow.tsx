@@ -94,19 +94,17 @@ export function Slideshow() {
     return subscribe("settings", () => {
       const newSettings = getSlideSettings()
 
+      if (transitionTimeout.current !== null) {
+        window.clearTimeout(transitionTimeout.current)
+        transitionTimeout.current = null
+      }
+
       setSettings(newSettings)
       setCurrentSlide(0)
       setVisible(true)
       transitionLocked.current = false
     })
   }, [])
-
-  // Safety if active slide count changes
-  useEffect(() => {
-    if (currentSlide >= slides.length) {
-      setCurrentSlide(0)
-    }
-  }, [currentSlide, slides.length])
 
   // Automatic slideshow
   useEffect(() => {

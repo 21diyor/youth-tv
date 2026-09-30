@@ -47,7 +47,7 @@ export function AdminGate() {
 
   // Auth resolved → load admin content (drafts + published), then render.
   return (
-    <StoreGate surface="admin" userKey={auth.user?.id ?? null}>
+    <StoreGate key={auth.user?.id} surface="admin" userKey={auth.user?.id ?? null}>
       <AdminPage />
     </StoreGate>
   )

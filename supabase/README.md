@@ -1,77 +1,62 @@
-# Supabase migration — YIA TV platform
+# Supabase — Youth TV
 
-Status: **migration 000001 applied; 000002 not applied.**
-The app still runs on `VITE_DATA_BACKEND=local`.
+## Verified 2026-09-30
 
-## Supabase project
+- Project: `yia-tv-platform` (`ymztqfzujdwfkqrsqzyu`), Frankfurt; active and healthy.
+- API: `https://ymztqfzujdwfkqrsqzyu.supabase.co`.
+- Both schema and storage migrations are applied.
+- Six accounts have roles: one Super Admin, one Press Admin, one Appeals Admin,
+  and three TV Viewers.
+- All six public tables have row-level security enabled.
+- All four content types have draft and published rows. Existing published data
+  was preserved; no seed or initial import was rerun.
+- Realtime publishes all four content tables. Clients subscribe to published updates.
+- `tv-media` is private, limited to 5 MB JPG/PNG/WebP files.
+- Local configuration uses the Supabase backend.
 
-| | |
-|---|---|
-| Project | `yia-tv-platform` (dedicated — shares nothing with any other project) |
-| Project ref | `ymztqfzujdwfkqrsqzyu` |
-| Organization | YRO |
-| Region | `eu-central-1` (Frankfurt) |
-| API URL | `https://ymztqfzujdwfkqrsqzyu.supabase.co` |
-| Frontend key | publishable key only, in git-ignored `.env.local` (see `.env.example`) |
+## Migration history
 
-## Migration files
+| Local source | Remote version | Name |
+| --- | --- | --- |
+| `migrations/20260919000001_tv_content_draft_publish.sql` | `20260919105811` | `tv_content_draft_publish` |
+| `migrations/20260919000002_tv_media_storage.sql` | `20260919152536` | `tv_media_storage` |
 
-| File | Contents | Status |
-|---|---|---|
-| `migrations/20260919000001_tv_content_draft_publish.sql` | enums, `user_roles`, role helpers, 4 draft/published content tables, audit log, seed fallback, triggers, publish RPCs, RLS, grants, realtime publication | **Applied 2026-09-19** (remote version `20260919105811`, name `tv_content_draft_publish`; content checksum identical to this file). The file's header still reads "PROPOSED — NOT APPLIED" because applied SQL is kept byte-for-byte unchanged. |
-| `migrations/20260919000002_tv_media_storage.sql` | private `tv-media` bucket + storage policies | **Not applied** — planned for step 9 |
+The existing files predate their remote application timestamps. Their historical
+headers say proposed/not applied; current remote history confirms both are applied.
+Do not rerun them against this project or use `db push` without reconciling history.
+The migration SQL is preserved unchanged.
 
-## Auth
+## Verification
 
-- Public sign-ups: disabled. Email confirmation: disabled. Site URL: `http://localhost:5173`.
-- Accounts are created by an administrator in the Supabase Dashboard
-  (Authentication → Users → Add user), passwords entered there — never in chat or code.
-- First Super Admin created and assigned `super_admin` on 2026-09-19 (step 4A).
-- Press Admin, Appeals Admin and TV accounts (`tv-1`, `tv-2`, `tv-3`): not created yet.
+`tests/permissions.sql` passed against the existing project on 2026-09-30. It checks
+published reads, draft visibility, draft updates and publish RPC authorization for
+all four configured roles. Test writes were rolled back; audit count remained 58.
+Anonymous users cannot execute any public SECURITY DEFINER function.
 
-## Sequence
+The security advisor reports nine authenticated SECURITY DEFINER RPC/helper warnings.
+The helpers check `auth.uid()` against the role table; publish functions enforce the
+required role and use an empty search path. These functions support atomic publishing
+and role lookups. They were reviewed and retained. Leaked-password protection is
+reported disabled and should be reviewed by the account administrator.
 
-| # | Step | Status |
-|---|---|---|
-| 0 | Git baseline, `@supabase/supabase-js`, `.env.example` | done |
-| 1 | localStorage behind adapter, `subscribe()`, async saves, save errors | done |
-| 2 | Draft/publish in the frontend on the **local** adapter: draft keys, `Saqlash` = save draft, outline `E’lon qilish` button, "E’lon qilinmagan o‘zgarishlar bor" status. Existing published localStorage keys unchanged, so the TV keeps showing live content | done |
-| 3 | Create dedicated project `yia-tv-platform`; apply `…000001`; run security/performance advisors | done (2026-09-19) |
-| 4A | First Super Admin account + `super_admin` role; disable public sign-ups; `src/lib/supabase.ts` client (not yet used) | done (2026-09-19) |
-| 4B | Create Press Admin, Appeals Admin, `tv-1`, `tv-2`, `tv-3`; assign roles | |
-| 5 | Implement Supabase adapter (published reads, draft saves, publish RPCs, published-only realtime) — tested in development only; production stays `local` | |
-| 6 | Auth gate + role-filtered admin in the frontend | |
-| 7 | **One-time localStorage → Supabase initial import (mandatory gate — see below)** | |
-| 8 | Activate `VITE_DATA_BACKEND=supabase`; sign in each TV with its own account. localStorage data is left untouched as a rollback path | |
-| 9 | Apply `…000002`; portrait / employee photo upload | |
-| 10 | Hardening: offline read cache, reconnect refetch, kiosk setup, cleanup | |
+## Existing browser-local installations
 
-## Step 7 — initial import (required before step 8)
+The historical localStorage import cannot be proven from this checkout. Do not
+replace the current database with default seed values. If a TV still has newer
+browser-local content, compare its four published keys before migrating it:
 
-The SQL seed contains `tvData.ts` defaults and is only a fallback for a brand-new
-installation. The live TV content lives in the browser's localStorage and must
-not be lost.
+- `youth-tv-president-content`
+- `youth-tv-appeals-content`
+- `youth-tv-employee-content`
+- `youth-tv-slide-settings`
 
-1. Run on the browser profile whose localStorage holds the content currently
-   shown on the TVs, signed in as **Super Admin** (the only role allowed to
-   write all four content types, including slide settings).
-2. Read the current **published** localStorage values:
-   `youth-tv-president-content`, `youth-tv-appeals-content`,
-   `youth-tv-employee-content`, `youth-tv-slide-settings`.
-   Unpublished local drafts are not imported — publish or discard them first;
-   the import warns if any local draft differs from its published value.
-3. Show a preview and validate each value against the database constraints
-   (appeals sum = total, array lengths, interval 5–300, ≥ 1 slide enabled,
-   year range). Any failure stops the import for that content type — nothing
-   is silently dropped or altered.
-4. For each content type, write the value to **both** rows through the normal
-   secured path: save the draft row, then call `publish_*()`, which copies the
-   draft into the published row atomically. Result: draft = published = live
-   TV content, recorded in `audit_log`.
-5. If a key is absent in localStorage, the TV is currently showing the
-   `tvData.ts` defaults, which equal the seed — no import needed for that type.
-6. Verify: read back both Supabase rows and compare field-by-field with the
-   localStorage values. Only after all four match may step 8 begin.
+Use a Super Admin, validate each value, save drafts through the secured client,
+publish, and compare the resulting database content before switching that device.
+Unpublished local drafts must be reviewed separately. Preserve local data for rollback.
 
-The import is run after step 5 testing, so any test data written to Supabase
-during development is overwritten by the live content.
+## Account management
+
+Use Supabase Authentication to manage users and `public.user_roles` to assign roles.
+Keep passwords out of source files and chat. Each TV should have its own viewer account.
+Set the Auth Site URL to the deployed origin before adding email redirect flows.
+The app currently signs in with email and password and does not expose public signup.

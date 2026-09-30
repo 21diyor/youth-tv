@@ -77,6 +77,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const { data } = getSupabase().auth.onAuthStateChange(
       (_event, nextSession) => {
+        if (!nextSession) {
+          setRolesUserId(null)
+          setRoles([])
+          setRolesError(null)
+          setRolesErrorNetwork(false)
+        }
         setSession(nextSession)
         setSessionReady(true)
       }

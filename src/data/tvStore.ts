@@ -170,6 +170,10 @@ export function getPublishState(key: TvContentKey): PublishState {
   }
 }
 
+export function getContentMeta(key: TvContentKey) {
+  return adapter.readMeta(key)
+}
+
 // ======================================================
 // SUBSCRIPTIONS (published content only)
 // ======================================================
