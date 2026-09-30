@@ -1,0 +1,11 @@
+# Never upload local secrets or local-only state.
+# Production values come from the Vercel project's Environment Variables.
+.env
+.env.*
+!.env.example
+
+node_modules
+dist
+.claude
+.vercel
+*.log
