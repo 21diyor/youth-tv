@@ -60,3 +60,7 @@ Use Supabase Authentication to manage users and `public.user_roles` to assign ro
 Keep passwords out of source files and chat. Each TV should have its own viewer account.
 Set the Auth Site URL to the deployed origin before adding email redirect flows.
 The app currently signs in with email and password and does not expose public signup.
+The Auth settings endpoint currently reports `disable_signup=false`; the earlier
+setup notes claiming signups were disabled were stale. New accounts receive no
+application role and cannot access content. Disable new signups in the Supabase
+Auth settings if this deployment should remain invitation-only.
