@@ -1,5 +1,6 @@
 import { useEffect, useReducer } from "react"
 import { useTashkentDate } from "@/hooks/useTashkentDate"
+import { tashkentDate } from "@/lib/tashkentTime"
 import {
   getContentMeta,
   getPublished,
@@ -10,8 +11,7 @@ import {
 } from "@/data/tvStore"
 
 const keys: TvContentKey[] = ["president", "appeals", "employee", "settings", "schedule", "managers", "birthday"]
-const dateFormat = new Intl.DateTimeFormat("uz-UZ", {
-  dateStyle: "medium",
+const timeFormat = new Intl.DateTimeFormat("en-GB", {
   timeStyle: "short",
   timeZone: "Asia/Tashkent",
 })
@@ -38,7 +38,8 @@ export function OverviewContent() {
     .filter((value): value is string => value !== null)
     .map((value) => new Date(value).getTime())
     .filter(Number.isFinite)
-  const lastPublished = publishedDates.length ? dateFormat.format(Math.max(...publishedDates)) : "Hali e’lon qilinmagan"
+  const latestDate = publishedDates.length ? new Date(Math.max(...publishedDates)) : null
+  const lastPublished = latestDate ? `${tashkentDate(latestDate)} ${timeFormat.format(latestDate)}` : "Hali e’lon qilinmagan"
 
   return (
     <>
