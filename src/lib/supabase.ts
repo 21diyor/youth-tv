@@ -76,11 +76,14 @@ export function getSupabase(): TvSupabaseClient {
     )
   }
 
+  const admin = window.location.pathname.startsWith("/admin")
   client = createClient<Database>(url, publishableKey, {
     auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: true,
+      persistSession: admin,
+      autoRefreshToken: admin,
+      detectSessionInUrl: admin,
+      // TV requests never inherit an old TV/admin login from this browser.
+      ...(admin ? {} : { storageKey: "youth-tv-public" }),
     },
     global: {
       fetch: privateStorageFetch,

@@ -35,6 +35,18 @@ export function StoreGate({
   )
   const [attempt, setAttempt] = useState(0)
 
+  // An unattended TV must recover even if its first load fails with no cache.
+  useEffect(() => {
+    if (surface !== "tv" || state.status !== "error") return
+    const retry = () => setAttempt((value) => value + 1)
+    const timer = window.setInterval(retry, 30_000)
+    window.addEventListener("online", retry)
+    return () => {
+      window.clearInterval(timer)
+      window.removeEventListener("online", retry)
+    }
+  }, [surface, state.status])
+
   useEffect(() => {
     let cancelled = false
 

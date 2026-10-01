@@ -188,23 +188,38 @@ export function useMediaUrl(path: string | null | undefined) {
 
     let cancelled = false
 
-    loadMediaUrl(wanted).then(
-      (url) => {
-        if (!cancelled) {
-          setState({ path: wanted, url, failed: false })
-        }
-      },
-      (error: unknown) => {
-        console.warn("[media] could not load", wanted, error)
+    let loaded = false
+    let pending = false
+    const load = () => {
+      if (loaded || pending || cancelled) return
+      pending = true
+      void loadMediaUrl(wanted).then(
+        (url) => {
+          loaded = true
+          if (!cancelled) {
+            setState({ path: wanted, url, failed: false })
+          }
+        },
+        (error: unknown) => {
+          console.warn("[media] could not load", wanted, error)
 
-        if (!cancelled) {
-          setState({ path: wanted, url: null, failed: true })
+          if (!cancelled) {
+            setState({ path: wanted, url: null, failed: true })
+          }
         }
-      }
-    )
+      ).finally(() => {
+        pending = false
+      })
+    }
+    load()
+    // Recover a failed photo request on unattended TVs, even with one slide.
+    const timer = window.setInterval(load, 30_000)
+    window.addEventListener("online", load)
 
     return () => {
       cancelled = true
+      window.clearInterval(timer)
+      window.removeEventListener("online", load)
     }
   }, [wanted])
 

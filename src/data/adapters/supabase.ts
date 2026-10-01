@@ -33,7 +33,7 @@ import type {
 /** Read-only offline copy of PUBLISHED content for TVs (not the live keys). */
 const SNAPSHOT_KEY = "youth-tv-supabase-published-snapshot-v1"
 
-const SAFETY_REFETCH_MS = 5 * 60 * 1000
+const SAFETY_REFETCH_MS = 30 * 1000
 
 // ======================================================
 // IN-MEMORY CACHE
@@ -180,7 +180,7 @@ function loadError(
 
   if (surface === "tv") {
     return new LoadError(
-      "TV ma’lumotlarini yuklab bo‘lmadi: ushbu qurilma tizimga kirmagan yoki ruxsati yo‘q."
+      "TV ma’lumotlarini yuklab bo‘lmadi. Ulanish avtomatik qayta tekshiriladi."
     )
   }
 
@@ -358,7 +358,6 @@ function loadSnapshot(): Snapshot | null {
 // ======================================================
 
 let channel: RealtimeChannel | null = null
-let refetchOnNextSubscribe = false
 let triggersInstalled = false
 
 /**
@@ -374,12 +373,6 @@ function channelAlive(): boolean {
 function ensureChannel() {
   if (channelAlive()) {
     return
-  }
-
-  if (channel) {
-    // Re-creating after the old channel died: updates may have been missed
-    // in between, so refetch as soon as the new one joins.
-    refetchOnNextSubscribe = true
   }
 
   const supabase = getSupabase()
@@ -411,13 +404,8 @@ function ensureChannel() {
 
   channel = next.subscribe((status) => {
     if (status === "SUBSCRIBED") {
-      // First join after a network load needs no refetch; any later join
-      // is a reconnect and may have missed updates.
-      if (refetchOnNextSubscribe) {
-        void refetchPublished("reconnect")
-      }
-
-      refetchOnNextSubscribe = true
+      // Catch updates missed between the HTTP read and any channel join.
+      void refetchPublished("subscribed")
     }
 
     if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
@@ -426,11 +414,7 @@ function ensureChannel() {
   })
 }
 
-function startLiveUpdates(fromSnapshot: boolean) {
-  if (!channel) {
-    refetchOnNextSubscribe = fromSnapshot
-  }
-
+function startLiveUpdates() {
   ensureChannel()
 
   // Page-lifetime triggers, installed once. Each refetch also repairs the
@@ -440,6 +424,11 @@ function startLiveUpdates(fromSnapshot: boolean) {
 
     window.addEventListener("online", () => {
       void refetchPublished("online")
+    })
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") {
+        void refetchPublished("visible")
+      }
     })
 
     window.setInterval(() => {
@@ -468,7 +457,7 @@ async function load(surface: TvSurface): Promise<TvInitResult> {
       saveSnapshot()
     }
 
-    startLiveUpdates(false)
+    startLiveUpdates()
 
     return { source: "network" }
   } catch (error) {
@@ -491,7 +480,7 @@ async function load(surface: TvSurface): Promise<TvInitResult> {
 
         servingSnapshot = true
         readySurfaces.add("tv")
-        startLiveUpdates(true)
+        startLiveUpdates()
 
         return { source: "snapshot" }
       }

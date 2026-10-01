@@ -16,10 +16,15 @@
 
 ## Migration history
 
+On 2026-10-01, public TV access was added. Anonymous visitors can read published
+content and referenced photos. Drafts, unused uploads, administration tables and
+write/publish operations remain protected. The storage bucket remains private.
+
 | Local source | Remote version | Name |
 | --- | --- | --- |
 | `migrations/20260919000001_tv_content_draft_publish.sql` | `20260919105811` | `tv_content_draft_publish` |
 | `migrations/20260919000002_tv_media_storage.sql` | `20260919152536` | `tv_media_storage` |
+| `migrations/20261001084833_public_tv_read_access.sql` | `20261001084850` | `public_tv_read_access` |
 
 The existing files predate their remote application timestamps. Their historical
 headers say proposed/not applied; current remote history confirms both are applied.
@@ -57,7 +62,8 @@ Unpublished local drafts must be reviewed separately. Preserve local data for ro
 ## Account management
 
 Use Supabase Authentication to manage users and `public.user_roles` to assign roles.
-Keep passwords out of source files and chat. Each TV should have its own viewer account.
+Keep passwords out of source files and chat. TVs no longer need accounts; the existing
+viewer accounts are retained but are not used by the public TV page.
 Set the Auth Site URL to the deployed origin before adding email redirect flows.
 The app currently signs in with email and password and does not expose public signup.
 The Auth settings endpoint currently reports `disable_signup=false`; the earlier

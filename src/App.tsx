@@ -1,8 +1,6 @@
 import { AdminGate } from "@/auth/AdminGate"
 import { AuthProvider } from "@/auth/AuthProvider"
-import { TvGate } from "@/auth/TvGate"
 import { StoreGate } from "@/data/StoreGate"
-import { tvBackend } from "@/data/tvStore"
 import { Slideshow } from "@/Slideshow"
 
 function App() {
@@ -17,16 +15,7 @@ function App() {
     )
   }
 
-  // TV on Supabase: TV (or admin) account sign-in, then published content.
-  if (tvBackend === "supabase") {
-    return (
-      <AuthProvider>
-        <TvGate />
-      </AuthProvider>
-    )
-  }
-
-  // TV on the local backend (rollback mode): no login, as before.
+  // Building TVs open published content directly, without a user session.
   return (
     <StoreGate surface="tv">
       <Slideshow />
