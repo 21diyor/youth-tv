@@ -1,16 +1,21 @@
 # Supabase — Youth TV
 
-## Verified 2026-09-30
+## Verified 2026-10-01
 
 - Project: `yia-tv-platform` (`ymztqfzujdwfkqrsqzyu`), Frankfurt; active and healthy.
 - API: `https://ymztqfzujdwfkqrsqzyu.supabase.co`.
-- Both schema and storage migrations are applied.
+- Schema, storage, public TV and department migrations are applied.
 - Six accounts have roles: one Super Admin, one Press Admin, one Appeals Admin,
   and three TV Viewers.
-- All six public tables have row-level security enabled.
-- All four content types have draft and published rows. Existing published data
+- All nine public tables have row-level security enabled.
+- All seven content types have draft and published rows. Existing published data
   was preserved; no seed or initial import was rerun.
-- Realtime publishes all four content tables. Clients subscribe to published updates.
+- Realtime publishes all seven content tables. Clients subscribe to published updates.
+- HR owns schedule, employee and birthday content. Appeals owns citizen and manager
+  statistics. Super Admin owns all content. Legacy Press Admin retains the quote.
+- The four user-provided manager names/titles are saved in manager and schedule
+  drafts. New slides remain disabled pending real counts, schedule and birthday
+  details. No account has been reassigned to HR.
 - `tv-media` is private, limited to 5 MB JPG/PNG/WebP files.
 - Local configuration uses the Supabase backend.
 
@@ -25,6 +30,8 @@ write/publish operations remain protected. The storage bucket remains private.
 | `migrations/20260919000001_tv_content_draft_publish.sql` | `20260919105811` | `tv_content_draft_publish` |
 | `migrations/20260919000002_tv_media_storage.sql` | `20260919152536` | `tv_media_storage` |
 | `migrations/20261001084833_public_tv_read_access.sql` | `20261001084850` | `public_tv_read_access` |
+| `migrations/20261001130042_hr_role.sql` | `20261001130224` | `hr_role` |
+| `migrations/20261001130045_department_slides.sql` | `20261001130238` | `department_slides` |
 
 The existing files predate their remote application timestamps. Their historical
 headers say proposed/not applied; current remote history confirms both are applied.
@@ -33,12 +40,14 @@ The migration SQL is preserved unchanged.
 
 ## Verification
 
-`tests/permissions.sql` passed against the existing project on 2026-09-30. It checks
+`tests/permissions.sql` passed against the existing project on 2026-10-01. It checks
 published reads, draft visibility, draft updates and publish RPC authorization for
-all four configured roles. Test writes were rolled back; audit count remained 58.
+all four configured roles. HR was also tested by temporarily assigning a test
+identity inside a transaction; all role and content writes were rolled back.
+Anonymous access and department validation tests also passed.
 Anonymous users cannot execute any public SECURITY DEFINER function.
 
-The security advisor reports nine authenticated SECURITY DEFINER RPC/helper warnings.
+The security advisor reports thirteen authenticated SECURITY DEFINER RPC/helper warnings.
 The helpers check `auth.uid()` against the role table; publish functions enforce the
 required role and use an empty search path. These functions support atomic publishing
 and role lookups. They were reviewed and retained. Leaked-password protection is

@@ -4,6 +4,7 @@ import type {
 } from "@supabase/supabase-js"
 
 import { getSupabase } from "@/lib/supabase"
+import { scheduleDefaults, managersDefaults, birthdayDefaults } from "@/data/departmentDefaults"
 
 import { isSameContent } from "@/data/contentEquality"
 import {
@@ -47,6 +48,9 @@ const cache: Record<ContentVersion, VersionCache> = {
 }
 
 const meta: Record<TvContentKey, ContentMeta> = {
+  schedule: { draftUpdatedAt: null, publishedAt: null },
+  managers: { draftUpdatedAt: null, publishedAt: null },
+  birthday: { draftUpdatedAt: null, publishedAt: null },
   president: { draftUpdatedAt: null, publishedAt: null },
   appeals: { draftUpdatedAt: null, publishedAt: null },
   employee: { draftUpdatedAt: null, publishedAt: null },
@@ -230,7 +234,7 @@ function applyDraft(key: TvContentKey, row: MappedRow) {
 // LOADING
 // ======================================================
 
-/** All four published rows; throws if any is unavailable. */
+/** All published rows; throws if any is unavailable. */
 async function fetchPublished(
   surface: TvSurface
 ): Promise<Record<TvContentKey, MappedRow>> {
@@ -339,6 +343,13 @@ function loadSnapshot(): Snapshot | null {
   try {
     const raw = localStorage.getItem(SNAPSHOT_KEY)
     const snapshot = raw ? (JSON.parse(raw) as Snapshot) : null
+
+    // Devices with the previous release can still show their saved content offline.
+    if (snapshot?.version === 1 && snapshot.published) {
+      snapshot.published.schedule ??= scheduleDefaults
+      snapshot.published.managers ??= managersDefaults
+      snapshot.published.birthday ??= birthdayDefaults
+    }
 
     if (
       snapshot?.version === 1 &&

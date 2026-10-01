@@ -19,6 +19,14 @@ npm run dev
 - `/admin`: administrator login, draft editing and publishing.
 - `Saqlash` saves a draft; `E’lon qilish` publishes it to the TVs.
 - Arrow keys change slides.
+- The bottom progress line shows time remaining before the next animated slide.
+- Order: citizen appeals, management schedule, four manager statistics slides,
+  birthday, Employee of the Month, President quote. Disabled slides are skipped.
+- Calendar dates and the displayed employee month/year follow Asia/Tashkent
+  automatically. The President quote's source date remains historical attribution.
+- New department slides start disabled. Enter real content, enable the slide,
+  save, then publish. Birthday slides stay active until HR disables and publishes
+  them; no personal birth date is collected.
 - Published changes arrive through Realtime, with a 30-second background refetch.
   TVs also refetch on reconnect and when the browser becomes visible again.
   Failed initial loads and photo downloads retry automatically every 30 seconds.
@@ -32,8 +40,9 @@ Never put a Supabase secret/service-role key in a `VITE_*` variable.
 | Role | Access |
 | --- | --- |
 | `super_admin` | All editors, slideshow settings and overview |
-| `press_admin` | President and employee editors |
-| `appeals_admin` | Appeals editor |
+| `press_admin` | President editor (legacy role) |
+| `hr_admin` | Management schedule, Employee of the Month, birthday |
+| `appeals_admin` | Citizen appeals and four manager statistics editors |
 | Visitor (no login) | Published slideshow and its photos |
 
 Accounts and roles are managed by an administrator in Supabase. Database row-level
@@ -49,6 +58,7 @@ needs the frontend assets, and uncached private images require connectivity.
 ```powershell
 npm run lint
 npm run build
+node --test scripts/tashkent-time.test.mjs
 npm run preview
 ```
 
@@ -59,6 +69,13 @@ It requires at least one existing account for each role being tested.
 `supabase/tests/public-tv.sql` verifies anonymous access is limited to published
 content and its images. `node scripts/verify-public-tv.mjs` checks real anonymous
 API reads, published image downloads and the Realtime subscription.
+`supabase/tests/department-content.sql` verifies JSON validation for the new
+content tables using fixtures. Department access is also enforced by publish RPC
+guards and media policies.
+
+All administrators use `/admin`; their role determines the department panel.
+Existing accounts are not reassigned automatically when adding HR. Grant
+`hr_admin` only to the intended HR account in Supabase.
 
 ## Deploy
 

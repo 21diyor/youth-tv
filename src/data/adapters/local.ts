@@ -8,6 +8,9 @@ import type {
 // Published keys are unchanged from the original prototype: they hold the
 // content the TVs are showing right now, so existing browsers keep working.
 export const localStorageKeys = {
+  schedule: "youth-tv-schedule-content",
+  managers: "youth-tv-managers-content",
+  birthday: "youth-tv-birthday-content",
   president: "youth-tv-president-content",
   employee: "youth-tv-employee-content",
   appeals: "youth-tv-appeals-content",
@@ -16,6 +19,9 @@ export const localStorageKeys = {
 
 // Draft keys are new. Absent until an admin first presses "Saqlash".
 export const localDraftStorageKeys = {
+  schedule: "youth-tv-schedule-draft",
+  managers: "youth-tv-managers-draft",
+  birthday: "youth-tv-birthday-draft",
   president: "youth-tv-president-draft",
   employee: "youth-tv-employee-draft",
   appeals: "youth-tv-appeals-draft",

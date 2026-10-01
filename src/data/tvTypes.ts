@@ -51,7 +51,15 @@ export type SlideSettings = {
   employeeEnabled: boolean
 }
 
+export type ScheduleContent = { enabled: boolean; entries: { name: string; title: string; day: string; time: string; location: string }[] }
+export type ManagerStatistics = { enabled: boolean; name: string; title: string; total: number; resolved: number; inProgress: number; overdue: number }
+export type ManagersContent = { managers: ManagerStatistics[] }
+export type BirthdayContent = { enabled: boolean; name: string; department: string; message: string; photoPath: string | null }
+
 export type TvContentMap = {
+  schedule: ScheduleContent
+  managers: ManagersContent
+  birthday: BirthdayContent
   president: PresidentContent
   employee: EmployeeContent
   appeals: AppealsContent

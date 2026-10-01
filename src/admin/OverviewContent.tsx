@@ -1,14 +1,15 @@
 import { useEffect, useReducer } from "react"
+import { useTashkentDate } from "@/hooks/useTashkentDate"
 import {
   getContentMeta,
-  getEmployeeContent,
+  getPublished,
   getPresidentContent,
   getSlideSettings,
   subscribe,
   type TvContentKey,
 } from "@/data/tvStore"
 
-const keys: TvContentKey[] = ["president", "appeals", "employee", "settings"]
+const keys: TvContentKey[] = ["president", "appeals", "employee", "settings", "schedule", "managers", "birthday"]
 const dateFormat = new Intl.DateTimeFormat("uz-UZ", {
   dateStyle: "medium",
   timeStyle: "short",
@@ -16,6 +17,7 @@ const dateFormat = new Intl.DateTimeFormat("uz-UZ", {
 })
 
 export function OverviewContent() {
+  const calendar = useTashkentDate()
   const [, refresh] = useReducer((value: number) => value + 1, 0)
   useEffect(() => {
     const cleanup = keys.map((key) => subscribe(key, refresh))
@@ -24,11 +26,13 @@ export function OverviewContent() {
 
   const settings = getSlideSettings()
   const president = getPresidentContent()
-  const employee = getEmployeeContent()
   const slides = [
-    { key: "president", title: "Prezident fikri", detail: president.sourceDate, enabled: settings.presidentEnabled },
     { key: "appeals", title: "Fuqarolar murojaatlari", detail: "Statistika va analitika", enabled: settings.appealsEnabled },
-    { key: "employee", title: "Oy xodimi", detail: `${employee.month} ${employee.year}`, enabled: settings.employeeEnabled },
+    { key: "schedule", title: "Rahbariyat qabul jadvali", detail: "HR bo‘limi", enabled: getPublished("schedule").enabled },
+    ...getPublished("managers").managers.map((manager, i) => ({ key: `manager-${i}`, title: manager.name || `Rahbar ${i + 1}`, detail: "Murojaatlar bo‘limi", enabled: manager.enabled })),
+    { key: "birthday", title: "Tug‘ilgan kun tabrigi", detail: "HR bo‘limi", enabled: getPublished("birthday").enabled },
+    { key: "employee", title: "Oy xodimi", detail: `${calendar.month} ${calendar.year}`, enabled: settings.employeeEnabled },
+    { key: "president", title: "Prezident fikri", detail: president.sourceDate, enabled: settings.presidentEnabled },
   ] as const
   const publishedDates = keys.map((key) => getContentMeta(key).publishedAt)
     .filter((value): value is string => value !== null)

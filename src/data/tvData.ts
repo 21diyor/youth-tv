@@ -1,6 +1,5 @@
 export const commonData = {
   agencyName: "Yoshlar ishlari agentligi",
-  displayDate: "17 sentabr 2026",
 }
 
 export const appealsData = {

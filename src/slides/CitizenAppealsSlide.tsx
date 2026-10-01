@@ -1,3 +1,5 @@
+import { AppealStats } from "./AppealStats"
+import { useTashkentDate } from "@/hooks/useTashkentDate"
 import { useEffect, useState } from "react"
 
 import {
@@ -30,7 +32,7 @@ import {
 } from "recharts"
 
 const BLUE = "#1D4ED8"
-const LIGHT_BLUE = "#93C5FD"
+const LIGHT_BLUE = "#FBBF24"
 const OVERDUE = "#DC2626"
 
 const chartConfig = {
@@ -45,6 +47,7 @@ function formatNumber(value: number) {
 }
 
 export function CitizenAppealsSlide() {
+  const calendar = useTashkentDate()
   const [content, setContent] = useState<AppealsContent>(() =>
     getAppealsContent()
   )
@@ -67,12 +70,6 @@ export function CitizenAppealsSlide() {
   const resolvedPercentage =
     total > 0 ? (resolved / total) * 100 : 0
 
-  const inProgressPercentage =
-    total > 0 ? (inProgress / total) * 100 : 0
-
-  const overduePercentage =
-    total > 0 ? (overdue / total) * 100 : 0
-
   const latestMonth =
     trendData[trendData.length - 1]?.appeals ?? 0
 
@@ -93,7 +90,7 @@ export function CitizenAppealsSlide() {
     {
       status: "Hal etilgan",
       value: resolved,
-      fill: BLUE,
+      fill: "#059669",
     },
     {
       status: "Jarayonda",
@@ -104,29 +101,6 @@ export function CitizenAppealsSlide() {
       status: "Muddati o'tgan",
       value: overdue,
       fill: OVERDUE,
-    },
-  ]
-
-  const stats = [
-    {
-      label: "Jami murojaatlar",
-      value: formatNumber(total),
-      detail: "Joriy davr",
-    },
-    {
-      label: "Hal etilgan",
-      value: formatNumber(resolved),
-      detail: `${resolvedPercentage.toFixed(1)}%`,
-    },
-    {
-      label: "Jarayonda",
-      value: formatNumber(inProgress),
-      detail: `${inProgressPercentage.toFixed(1)}%`,
-    },
-    {
-      label: "Muddati o'tgan",
-      value: formatNumber(overdue),
-      detail: `${overduePercentage.toFixed(1)}%`,
     },
   ]
 
@@ -149,53 +123,16 @@ export function CitizenAppealsSlide() {
 
             <div className="pt-[2px] text-right">
               <p className="text-[16px] font-semibold tabular-nums">
-                {commonData.displayDate}
+                {calendar.date}
               </p>
 
               <p className="mt-[5px] text-[13px] text-neutral-500">
-                Ma'lumotlar yangilangan
+                Toshkent vaqti
               </p>
             </div>
           </header>
 
-          {/* KPI STRIP */}
-          <section className="mt-[22px] shrink-0 border-y border-neutral-200">
-            <div className="grid grid-cols-4">
-              {stats.map((stat, index) => (
-                <div
-                  key={stat.label}
-                  className={`py-[17px] ${
-                    index !== 0
-                      ? "border-l border-neutral-200 pl-[30px]"
-                      : ""
-                  }`}
-                >
-                  <p className="text-[14px] font-medium text-neutral-500">
-                    {stat.label}
-                  </p>
-
-                  <div className="mt-[6px] flex items-end gap-[12px]">
-                    <p className="text-[39px] font-semibold leading-none tracking-[-0.045em] tabular-nums">
-                      {stat.value}
-                    </p>
-
-                    {index !== 0 && (
-                      <span className="mb-[3px] text-[13px] font-medium text-neutral-400">
-                        {stat.detail}
-                      </span>
-                    )}
-                  </div>
-
-                  {index === 0 && (
-                    <p className="mt-[6px] text-[12px] font-medium text-neutral-400">
-                      {stat.detail}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          </section>
-
+          <section className="mt-[22px] shrink-0"><AppealStats {...content} /></section>
           {/* ANALYTICS */}
           <section className="mt-[22px] grid min-h-0 flex-1 grid-cols-[1.7fr_0.78fr] gap-[34px]">
 
@@ -236,7 +173,7 @@ export function CitizenAppealsSlide() {
                     <span className="h-[14px] w-px bg-neutral-200" />
 
                     <span className="text-[12px] font-medium text-neutral-500">
-                      2026 yil · oylar kesimida
+                      Oylar kesimida
                     </span>
                   </div>
                 </div>

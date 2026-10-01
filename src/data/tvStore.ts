@@ -1,3 +1,4 @@
+import { scheduleDefaults, managersDefaults, birthdayDefaults } from "./departmentDefaults"
 import {
   appealsData,
   employeeOfMonthData,
@@ -115,6 +116,9 @@ const defaultSlideSettings: SlideSettings = {
 }
 
 const defaults: TvContentMap = {
+  schedule: scheduleDefaults,
+  managers: managersDefaults,
+  birthday: birthdayDefaults,
   president: presidentSlideData,
   employee: employeeOfMonthData,
   appeals: appealsData,

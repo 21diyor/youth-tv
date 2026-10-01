@@ -1,214 +1,96 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react"
-
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { CitizenAppealsSlide } from "@/slides/CitizenAppealsSlide"
 import { EmployeeOfMonthSlide } from "@/slides/EmployeeOfMonthSlide"
 import { PresidentQuoteSlide } from "@/slides/PresidentQuoteSlide"
+import { BirthdaySlide, ManagementScheduleSlide, ManagerAppealsSlide } from "@/slides/DepartmentSlides"
+import { usePublishedContent } from "@/hooks/usePublishedContent"
 
-import {
-  getSlideSettings,
-  subscribe,
-  type SlideSettings,
-} from "@/data/tvStore"
-
-const TRANSITION_DURATION = 500
+const TRANSITION_MS = 450
 
 export function Slideshow() {
-  const [settings, setSettings] =
-    useState<SlideSettings>(() => getSlideSettings())
+  const settings = usePublishedContent("settings")
+  const schedule = usePublishedContent("schedule")
+  const managers = usePublishedContent("managers")
+  const birthday = usePublishedContent("birthday")
+  const slides = [
+    { id: "appeals", enabled: settings.appealsEnabled, element: <CitizenAppealsSlide /> },
+    { id: "schedule", enabled: schedule.enabled, element: <ManagementScheduleSlide /> },
+    ...managers.managers.map((manager, index) => ({ id: `manager-${index}`, enabled: manager.enabled, element: <ManagerAppealsSlide index={index} /> })),
+    { id: "birthday", enabled: birthday.enabled, element: <BirthdaySlide /> },
+    { id: "employee", enabled: settings.employeeEnabled, element: <EmployeeOfMonthSlide /> },
+    { id: "president", enabled: settings.presidentEnabled, element: <PresidentQuoteSlide /> },
+  ].filter(slide => slide.enabled)
+  const ids = slides.map(slide => slide.id).join(",")
+  const duration = Math.max(5, settings.intervalSeconds) * 1000
+  return <Playback key={`${ids}-${duration}`} slides={slides} duration={duration} />
+}
 
-  const [currentSlide, setCurrentSlide] = useState(0)
-  const [visible, setVisible] = useState(true)
-
-  const transitionTimeout = useRef<number | null>(null)
-  const transitionLocked = useRef(false)
-
-  const slides = useMemo(() => {
-    return [
-      {
-        id: "president",
-        name: "Prezident fikri",
-        component: PresidentQuoteSlide,
-        enabled: settings.presidentEnabled,
-      },
-      {
-        id: "appeals",
-        name: "Fuqarolar murojaatlari",
-        component: CitizenAppealsSlide,
-        enabled: settings.appealsEnabled,
-      },
-      {
-        id: "employee",
-        name: "Oy xodimi",
-        component: EmployeeOfMonthSlide,
-        enabled: settings.employeeEnabled,
-      },
-    ].filter((slide) => slide.enabled)
-  }, [settings])
-
-  const changeSlide = useCallback(
-    (direction: "next" | "previous") => {
-      if (slides.length <= 1) return
-      if (transitionLocked.current) return
-
-      transitionLocked.current = true
-      setVisible(false)
-
-      if (transitionTimeout.current) {
-        window.clearTimeout(transitionTimeout.current)
-      }
-
-      transitionTimeout.current = window.setTimeout(() => {
-        setCurrentSlide((current) => {
-          if (direction === "next") {
-            return (current + 1) % slides.length
-          }
-
-          return (
-            current - 1 + slides.length
-          ) % slides.length
-        })
-
-        setVisible(true)
-        transitionLocked.current = false
-      }, TRANSITION_DURATION)
-    },
-    [slides.length]
-  )
-
-  const nextSlide = useCallback(() => {
-    changeSlide("next")
-  }, [changeSlide])
-
-  const previousSlide = useCallback(() => {
-    changeSlide("previous")
-  }, [changeSlide])
-
-  // Listen for settings changes from the Admin tab
+function Playback({ slides, duration }: { slides: { id: string; element: ReactNode }[]; duration: number }) {
+  const [scale, setScale] = useState(() => Math.min(window.innerWidth / 1920, window.innerHeight / 1080))
   useEffect(() => {
-    return subscribe("settings", () => {
-      const newSettings = getSlideSettings()
-
-      if (transitionTimeout.current !== null) {
-        window.clearTimeout(transitionTimeout.current)
-        transitionTimeout.current = null
-      }
-
-      setSettings(newSettings)
-      setCurrentSlide(0)
-      setVisible(true)
-      transitionLocked.current = false
-    })
+    const resize = () => setScale(Math.min(window.innerWidth / 1920, window.innerHeight / 1080))
+    window.addEventListener("resize", resize)
+    return () => window.removeEventListener("resize", resize)
   }, [])
+  const ids = slides.map(slide => slide.id).join(",")
+  // Start each playlist at its first enabled slide.
+  const [activeId, setActiveId] = useState("appeals")
+  const [cycle, setCycle] = useState(0)
+  const [leaving, setLeaving] = useState(false)
+  const activeIndex = Math.max(0, slides.findIndex(slide => slide.id === activeId))
+  const current = slides[activeIndex]
+  const currentId = current?.id
+  const timer = useRef<number | undefined>(undefined)
+  const locked = useRef(false)
 
-  // Automatic slideshow
+  const advance = useCallback((direction: number) => {
+    if (locked.current) return
+    const order = ids ? ids.split(",") : []
+    if (!order.length) return
+    locked.current = true
+    setLeaving(true)
+    timer.current = window.setTimeout(() => {
+      const index = Math.max(0, order.indexOf(currentId ?? ""))
+      setActiveId(order[(index + direction + order.length) % order.length])
+      setCycle(value => value + 1)
+      setLeaving(false)
+      locked.current = false
+    }, TRANSITION_MS)
+  }, [ids, currentId])
+
   useEffect(() => {
-    if (slides.length <= 1) {
-      return
-    }
+    const timeout = window.setTimeout(() => advance(1), duration)
+    return () => window.clearTimeout(timeout)
+  }, [advance, duration, cycle])
 
-    const duration =
-      Math.max(settings.intervalSeconds, 5) * 1000
-
-    const interval = window.setInterval(() => {
-      nextSlide()
-    }, duration)
-
-    return () => {
-      window.clearInterval(interval)
-    }
-  }, [
-    settings.intervalSeconds,
-    slides.length,
-    nextSlide,
-  ])
-
-  // Keyboard controls
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "ArrowRight") {
-        nextSlide()
-      }
-
-      if (event.key === "ArrowLeft") {
-        previousSlide()
-      }
-    }
-
-    window.addEventListener("keydown", handleKeyDown)
-
-    return () => {
-      window.removeEventListener(
-        "keydown",
-        handleKeyDown
-      )
-    }
-  }, [nextSlide, previousSlide])
-
-  // Cleanup transition timeout
-  useEffect(() => {
-    return () => {
-      if (transitionTimeout.current) {
-        window.clearTimeout(
-          transitionTimeout.current
-        )
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
+        event.preventDefault()
+        advance(event.key === "ArrowRight" ? 1 : -1)
       }
     }
-  }, [])
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [advance])
 
-  if (slides.length === 0) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-[#FAFAF9]">
-        <p className="text-[14px] text-neutral-500">
-          Faol slayd mavjud emas
-        </p>
-      </div>
-    )
-  }
+  // Cancel any transition whose captured playlist is no longer current.
+  useEffect(() => {
+    return () => {
+      window.clearTimeout(timer.current)
+      locked.current = false
+    }
+  }, [ids])
 
-  const CurrentSlide =
-    slides[currentSlide]?.component ??
-    slides[0].component
-
-  return (
-    <div className="relative min-h-screen overflow-hidden bg-[#FAFAF9]">
-      <div
-        className={`transition-opacity ease-out ${
-          visible ? "opacity-100" : "opacity-0"
-        }`}
-        style={{
-          transitionDuration: `${TRANSITION_DURATION}ms`,
-        }}
-      >
-        <CurrentSlide />
-      </div>
-
-      {/* DEVELOPMENT-ONLY INDICATOR */}
-      {import.meta.env.DEV && (
-        <div className="fixed bottom-[18px] left-1/2 z-50 -translate-x-1/2">
-          <div className="flex items-center gap-[10px] rounded-full border border-black/10 bg-white/90 px-[14px] py-[8px] shadow-sm backdrop-blur">
-            <span className="mr-[4px] text-[10px] font-semibold text-neutral-500">
-              {slides[currentSlide]?.name}
-            </span>
-
-            {slides.map((slide, index) => (
-              <div
-                key={slide.id}
-                className={`h-[6px] rounded-full transition-all duration-300 ${
-                  index === currentSlide
-                    ? "w-[22px] bg-[#1D4ED8]"
-                    : "w-[6px] bg-neutral-300"
-                }`}
-              />
-            ))}
-          </div>
-        </div>
-      )}
+  if (!current) return <main className="flex min-h-screen items-center justify-center">Faol slayd mavjud emas</main>
+  return <div className="tv-playback">
+    <div className="tv-canvas" style={{ transform: `translate(-50%, -50%) scale(${scale})` }}>
+    <div key={`${current.id}-${cycle}`} className={`tv-slide ${leaving ? "tv-slide-leaving" : "tv-slide-entering"}`}>
+      {current.element}
     </div>
-  )
+    </div>
+    <div className="tv-progress-track" aria-hidden="true">
+      <div key={`${current.id}-${ids}-${cycle}-${duration}`} className="tv-progress-fill" style={{ animationDuration: `${duration}ms` }} />
+    </div>
+  </div>
 }

@@ -1,3 +1,4 @@
+import { useTashkentDate } from "@/hooks/useTashkentDate"
 import { useState } from "react"
 
 import { uploadEmployeePhoto, useMediaUrl } from "@/data/media"
@@ -17,8 +18,8 @@ import { Textarea } from "@/components/ui/textarea"
 export function EmployeeEditor() {
   const [initialData] = useState(getEmployeeDraft)
 
-  const [month, setMonth] = useState(initialData.month)
-  const [year, setYear] = useState(String(initialData.year))
+  const { month, year, date } = useTashkentDate()
+
   const [name, setName] = useState(initialData.name)
   const [position, setPosition] = useState(initialData.position)
   const [department, setDepartment] = useState(
@@ -97,37 +98,7 @@ export function EmployeeEditor() {
 
           <div className="space-y-[22px] p-[26px]">
 
-            <div className="grid grid-cols-2 gap-[18px]">
-              <div className="space-y-[8px]">
-                <Label htmlFor="employee-month">
-                  Oy
-                </Label>
-
-                <Input
-                  id="employee-month"
-                  value={month}
-                  onChange={(event) =>
-                    setMonth(event.target.value)
-                  }
-                />
-              </div>
-
-              <div className="space-y-[8px]">
-                <Label htmlFor="employee-year">
-                  Yil
-                </Label>
-
-                <Input
-                  id="employee-year"
-                  type="number"
-                  value={year}
-                  onChange={(event) =>
-                    setYear(event.target.value)
-                  }
-                />
-              </div>
-            </div>
-
+            <p className="text-sm text-slate-500">Sana: {date} · Toshkent vaqti (avtomatik)</p>
             <div className="space-y-[8px]">
               <Label htmlFor="employee-name">
                 Ism familiya

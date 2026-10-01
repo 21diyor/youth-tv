@@ -62,7 +62,7 @@ function uploadErrorMessage(error: { message?: string; statusCode?: string | num
   return "Rasmni yuklab bo‘lmadi. Qayta urinib ko‘ring."
 }
 
-async function upload(folder: "president" | "employee", file: File) {
+async function upload(folder: "president" | "employee" | "birthday", file: File) {
   if (tvBackend !== "supabase") {
     throw new Error("Rasm yuklash faqat Supabase rejimida ishlaydi.")
   }
@@ -105,6 +105,10 @@ export function uploadPresidentPortrait(file: File): Promise<string> {
 /** Upload a new Employee of the Month photo; returns its storage path. */
 export function uploadEmployeePhoto(file: File): Promise<string> {
   return upload("employee", file)
+}
+
+export function uploadBirthdayPhoto(file: File): Promise<string> {
+  return upload("birthday", file)
 }
 
 // ======================================================

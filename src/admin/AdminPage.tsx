@@ -1,4 +1,5 @@
 import { OverviewContent } from "@/admin/OverviewContent"
+import { ScheduleEditor, ManagersEditor, BirthdayEditor } from "@/admin/DepartmentEditors"
 import { useState } from "react"
 import { PresidentEditor } from "@/admin/PresidentEditor"
 import { EmployeeEditor } from "@/admin/EmployeeEditor"
@@ -34,6 +35,9 @@ const menuItems: {
   title: string
   description: string
 }[] = [
+  { id: "managers", title: "Rahbarlar murojaatlari", description: "Murojaatlar bo‘limi" },
+  { id: "schedule", title: "Rahbariyat qabul jadvali", description: "HR bo‘limi" },
+  { id: "birthday", title: "Tug‘ilgan kun tabrigi", description: "HR bo‘limi" },
   {
     id: "overview",
     title: "Umumiy ko‘rinish",
@@ -68,7 +72,10 @@ export function AdminPage() {
   // protection; this only hides sections the user cannot act on.
   const visibleItems = menuItems.filter((item) =>
     canSeeSection(item.id, roles)
-  )
+  ).sort((a, b) => {
+    const order: Section[] = ["overview", "appeals", "managers", "schedule", "employee", "birthday", "president", "settings"]
+    return order.indexOf(a.id) - order.indexOf(b.id)
+  })
 
   const [activeSection, setActiveSection] = useState<Section>(
     () => visibleItems[0]?.id ?? "overview"
@@ -102,7 +109,7 @@ export function AdminPage() {
             </p>
 
             <h1 className="mt-[7px] text-[22px] font-semibold tracking-[-0.035em]">
-              TV boshqaruvi
+              {roles.includes("super_admin") ? "Super Admin" : roles.includes("hr_admin") ? "HR bo‘limi" : roles.includes("appeals_admin") ? "Murojaatlar bo‘limi" : "TV boshqaruvi"}
             </h1>
           </div>
 
@@ -202,6 +209,9 @@ export function AdminPage() {
               {showSection("overview") && (
                 <OverviewContent />
               )}
+              {showSection("schedule") && <ScheduleEditor />}
+              {showSection("managers") && <ManagersEditor />}
+              {showSection("birthday") && <BirthdayEditor />}
 
               {showSection("president") && (
                 <PresidentEditor />

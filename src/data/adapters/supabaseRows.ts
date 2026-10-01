@@ -18,6 +18,9 @@ import type { Json, Tables } from "@/types/database"
 // the camelCase shapes from tvTypes.ts.
 
 export const CONTENT_KEYS: readonly TvContentKey[] = [
+  "schedule",
+  "managers",
+  "birthday",
   "president",
   "appeals",
   "employee",
@@ -25,6 +28,9 @@ export const CONTENT_KEYS: readonly TvContentKey[] = [
 ]
 
 export const CONTENT_TABLES = {
+  schedule: "schedule_content",
+  managers: "managers_content",
+  birthday: "birthday_content",
   president: "president_content",
   appeals: "appeals_content",
   employee: "employee_content",
@@ -44,7 +50,8 @@ type AppealsRow = Tables<"appeals_content">
 type EmployeeRow = Tables<"employee_content">
 type SettingsRow = Tables<"slide_settings">
 
-type AnyContentRow = PresidentRow | AppealsRow | EmployeeRow | SettingsRow
+type DepartmentRow = Tables<"schedule_content"> | Tables<"managers_content"> | Tables<"birthday_content">
+type AnyContentRow = PresidentRow | AppealsRow | EmployeeRow | SettingsRow | DepartmentRow
 
 /** A mapped row: component-facing content plus backend timestamps. */
 export type MappedRow<K extends TvContentKey = TvContentKey> = {
@@ -120,6 +127,11 @@ export function mapRow(
   let content: TvContentMap[TvContentKey]
 
   switch (key) {
+    case "schedule":
+    case "managers":
+    case "birthday":
+      content = (row as DepartmentRow).payload as unknown as TvContentMap[typeof key]
+      break
     case "president":
       content = toPresident(row as PresidentRow)
       break
@@ -166,6 +178,12 @@ export async function selectRow(
   const supabase = getSupabase()
 
   switch (key) {
+    case "schedule":
+    case "managers":
+    case "birthday": {
+      const { data, error } = await supabase.from(CONTENT_TABLES[key]).select("*").eq("status", version).maybeSingle()
+      return result(key, data, error)
+    }
     case "president": {
       const { data, error } = await supabase
         .from("president_content")
@@ -212,6 +230,14 @@ export async function updateDraftRow<K extends TvContentKey>(
   const supabase = getSupabase()
 
   switch (key) {
+    case "schedule":
+    case "managers":
+    case "birthday": {
+      const table = CONTENT_TABLES[key as "schedule" | "managers" | "birthday"]
+      const { data, error } = await supabase.from(table)
+        .update({ payload: value as unknown as Json }).eq("status", "draft").select()
+      return result(key, data?.[0] ?? null, error)
+    }
     case "president": {
       const v = value as PresidentContent
       const { data, error } = await supabase
@@ -288,6 +314,13 @@ export async function callPublish(key: TvContentKey): Promise<RowResult> {
   const supabase = getSupabase()
 
   switch (key) {
+    case "schedule":
+    case "managers":
+    case "birthday": {
+      const rpc = { schedule: "publish_schedule_content", managers: "publish_managers_content", birthday: "publish_birthday_content" } as const
+      const { data, error } = await supabase.rpc(rpc[key])
+      return result(key, data, error)
+    }
     case "president": {
       const { data, error } = await supabase.rpc("publish_president_content")
       return result(key, data, error)

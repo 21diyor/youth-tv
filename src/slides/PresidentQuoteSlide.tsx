@@ -1,3 +1,4 @@
+import { useTashkentDate } from "@/hooks/useTashkentDate"
 import { useEffect, useState } from "react"
 
 import presidentImage from "@/assets/president.jpg"
@@ -12,6 +13,7 @@ import {
 } from "@/data/tvStore"
 
 export function PresidentQuoteSlide() {
+  const calendar = useTashkentDate()
   const [content, setContent] =
     useState<PresidentContent>(() => getPresidentContent())
 
@@ -51,7 +53,7 @@ export function PresidentQuoteSlide() {
                 </span>
 
                 <span className="text-[11px] font-medium text-white/70">
-                  2026
+                  {calendar.year}
                 </span>
               </div>
             </div>
@@ -103,7 +105,7 @@ export function PresidentQuoteSlide() {
               </p>
 
               <p className="text-[12px] tabular-nums text-neutral-400">
-                {commonData.displayDate}
+                {calendar.date}
               </p>
             </footer>
           </section>

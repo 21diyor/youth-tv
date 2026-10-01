@@ -1,8 +1,3 @@
-// GENERATED from the Supabase schema (project ymztqfzujdwfkqrsqzyu) after
-// migration 20260919000001_tv_content_draft_publish. Do not edit by hand —
-// regenerate after schema changes. Component-facing shapes live in
-// src/data/tvTypes.ts; row ↔ content mapping lives in the Supabase adapter.
-
 export type Json =
   | string
   | number
@@ -97,6 +92,33 @@ export type Database = {
         }
         Relationships: []
       }
+      birthday_content: {
+        Row: {
+          payload: Json
+          published_at: string | null
+          published_by: string | null
+          status: Database["public"]["Enums"]["content_status"]
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          payload: Json
+          published_at?: string | null
+          published_by?: string | null
+          status: Database["public"]["Enums"]["content_status"]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          payload?: Json
+          published_at?: string | null
+          published_by?: string | null
+          status?: Database["public"]["Enums"]["content_status"]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       employee_content: {
         Row: {
           achievements: Json
@@ -145,6 +167,33 @@ export type Database = {
         }
         Relationships: []
       }
+      managers_content: {
+        Row: {
+          payload: Json
+          published_at: string | null
+          published_by: string | null
+          status: Database["public"]["Enums"]["content_status"]
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          payload: Json
+          published_at?: string | null
+          published_by?: string | null
+          status: Database["public"]["Enums"]["content_status"]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          payload?: Json
+          published_at?: string | null
+          published_by?: string | null
+          status?: Database["public"]["Enums"]["content_status"]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       president_content: {
         Row: {
           name: string
@@ -178,6 +227,33 @@ export type Database = {
           published_by?: string | null
           quote?: string
           source_date?: string
+          status?: Database["public"]["Enums"]["content_status"]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      schedule_content: {
+        Row: {
+          payload: Json
+          published_at: string | null
+          published_by: string | null
+          status: Database["public"]["Enums"]["content_status"]
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          payload: Json
+          published_at?: string | null
+          published_by?: string | null
+          status: Database["public"]["Enums"]["content_status"]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          payload?: Json
+          published_at?: string | null
+          published_by?: string | null
           status?: Database["public"]["Enums"]["content_status"]
           updated_at?: string
           updated_by?: string | null
@@ -244,6 +320,7 @@ export type Database = {
     }
     Functions: {
       can_manage_appeals: { Args: never; Returns: boolean }
+      can_manage_hr: { Args: never; Returns: boolean }
       can_manage_press: { Args: never; Returns: boolean }
       has_any_role: { Args: never; Returns: boolean }
       has_role: {
@@ -274,6 +351,23 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      publish_birthday_content: {
+        Args: never
+        Returns: {
+          payload: Json
+          published_at: string | null
+          published_by: string | null
+          status: Database["public"]["Enums"]["content_status"]
+          updated_at: string
+          updated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "birthday_content"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       publish_employee_content: {
         Args: never
         Returns: {
@@ -294,6 +388,23 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "employee_content"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      publish_managers_content: {
+        Args: never
+        Returns: {
+          payload: Json
+          published_at: string | null
+          published_by: string | null
+          status: Database["public"]["Enums"]["content_status"]
+          updated_at: string
+          updated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "managers_content"
           isOneToOne: true
           isSetofReturn: false
         }
@@ -319,6 +430,23 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      publish_schedule_content: {
+        Args: never
+        Returns: {
+          payload: Json
+          published_at: string | null
+          published_by: string | null
+          status: Database["public"]["Enums"]["content_status"]
+          updated_at: string
+          updated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "schedule_content"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       publish_slide_settings: {
         Args: never
         Returns: {
@@ -339,9 +467,18 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      valid_department_content: {
+        Args: { kind: string; value: Json }
+        Returns: boolean
+      }
     }
     Enums: {
-      app_role: "super_admin" | "appeals_admin" | "press_admin" | "tv_viewer"
+      app_role:
+        | "super_admin"
+        | "appeals_admin"
+        | "press_admin"
+        | "tv_viewer"
+        | "hr_admin"
       content_status: "draft" | "published"
     }
     CompositeTypes: {
@@ -470,7 +607,13 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["super_admin", "appeals_admin", "press_admin", "tv_viewer"],
+      app_role: [
+        "super_admin",
+        "appeals_admin",
+        "press_admin",
+        "tv_viewer",
+        "hr_admin",
+      ],
       content_status: ["draft", "published"],
     },
   },

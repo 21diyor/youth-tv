@@ -1,3 +1,4 @@
+import { useTashkentDate } from "@/hooks/useTashkentDate"
 import { useEffect, useState } from "react"
 
 import { useMediaUrl } from "@/data/media"
@@ -10,6 +11,7 @@ import {
 } from "@/data/tvStore"
 
 export function EmployeeOfMonthSlide() {
+  const calendar = useTashkentDate()
   const [content, setContent] =
     useState<EmployeeContent>(() => getEmployeeContent())
 
@@ -42,11 +44,11 @@ export function EmployeeOfMonthSlide() {
 
             <div className="pt-[2px] text-right">
               <p className="text-[13px] font-semibold uppercase tracking-[0.16em] text-[#1D4ED8]">
-                {content.month}
+                {calendar.month}
               </p>
 
               <p className="mt-[5px] text-[13px] text-neutral-500">
-                {content.year} yil
+                {calendar.year} yil
               </p>
             </div>
           </header>
@@ -109,7 +111,7 @@ export function EmployeeOfMonthSlide() {
               {/* IDENTITY */}
               <div>
                 <p className="text-[13px] font-semibold uppercase tracking-[0.18em] text-[#1D4ED8]">
-                  {content.month} oyi xodimi
+                  {calendar.month} oyi xodimi
                 </p>
 
                 <h2 className="mt-[15px] max-w-[760px] text-[58px] font-semibold leading-[0.98] tracking-[-0.055em]">
@@ -140,7 +142,7 @@ export function EmployeeOfMonthSlide() {
                   </p>
 
                   <p className="text-[11px] font-medium text-neutral-400">
-                    {content.year}
+                    {calendar.year}
                   </p>
                 </div>
 
@@ -174,7 +176,7 @@ export function EmployeeOfMonthSlide() {
             </p>
 
             <p className="text-[11px] tabular-nums text-neutral-400">
-              {commonData.displayDate}
+              {calendar.date}
             </p>
           </footer>
 

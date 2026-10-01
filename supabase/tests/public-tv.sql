@@ -3,7 +3,7 @@ set local role anon;
 do $test$
 declare table_name text; n integer;
 begin
-  foreach table_name in array array['president_content','appeals_content','employee_content','slide_settings'] loop
+  foreach table_name in array array['president_content','appeals_content','employee_content','slide_settings','schedule_content','managers_content','birthday_content'] loop
     execute format('select count(*) from public.%I', table_name) into n;
     if n <> 1 then raise exception 'Expected one published row in %', table_name; end if;
     execute format('select count(*) from public.%I where status = ''draft''', table_name) into n;
@@ -24,6 +24,7 @@ begin
     select 1 from storage.objects o where bucket_id='tv-media'
       and not exists (select 1 from public.president_content p where p.status='published' and p.portrait_path=o.name)
       and not exists (select 1 from public.employee_content e where e.status='published' and e.photo_path=o.name)
+      and not exists (select 1 from public.birthday_content b where b.status='published' and b.payload->>'photoPath'=o.name)
   ) then raise exception 'Unpublished media is exposed'; end if;
 end $test$;
 rollback;

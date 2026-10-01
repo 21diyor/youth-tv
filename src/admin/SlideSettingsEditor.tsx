@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { usePublishedContent } from "@/hooks/usePublishedContent"
 
 import {
   getSlideSettingsDraft,
@@ -12,6 +13,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
 export function SlideSettingsEditor() {
+  const schedule = usePublishedContent("schedule")
+  const managers = usePublishedContent("managers")
+  const birthday = usePublishedContent("birthday")
+  const departmentCount = Number(schedule.enabled) + Number(birthday.enabled) + managers.managers.filter(m => m.enabled).length
   const [initialSettings] = useState(getSlideSettingsDraft)
 
   const [interval, setInterval] = useState(
@@ -36,7 +41,7 @@ export function SlideSettingsEditor() {
   const intervalNumber = Number(interval) || 0
 
   const intervalValid =
-    intervalNumber >= 5 && intervalNumber <= 300
+    Number.isInteger(intervalNumber) && intervalNumber >= 5 && intervalNumber <= 300
 
   const canSave =
     enabledCount > 0 && intervalValid
@@ -126,11 +131,11 @@ export function SlideSettingsEditor() {
           <div className="flex items-center justify-between">
             <div>
               <h4 className="text-[15px] font-semibold">
-                Faol slaydlar
+                Asosiy slaydlar
               </h4>
 
               <p className="mt-[3px] text-[11px] text-neutral-400">
-                TV ekranida ko‘rsatiladigan slaydlarni tanlang
+                Jadval, rahbarlar va tabrik slaydlari o‘z bo‘limlarida yoqiladi
               </p>
             </div>
 
@@ -142,7 +147,7 @@ export function SlideSettingsEditor() {
 
         <div>
           <SlideToggle
-            number="01"
+            number="09"
             title="Prezident fikri"
             description="Prezident iqtibosi va portreti"
             checked={presidentEnabled}
@@ -150,7 +155,7 @@ export function SlideSettingsEditor() {
           />
 
           <SlideToggle
-            number="02"
+            number="01"
             title="Fuqarolar murojaatlari"
             description="Statistika va analitik ko‘rsatkichlar"
             checked={appealsEnabled}
@@ -158,7 +163,7 @@ export function SlideSettingsEditor() {
           />
 
           <SlideToggle
-            number="03"
+            number="08"
             title="Oy xodimi"
             description="Xodim ma’lumotlari va asosiy natijalar"
             checked={employeeEnabled}
@@ -188,7 +193,7 @@ export function SlideSettingsEditor() {
             </p>
 
             <p className="mt-[5px] text-[26px] font-semibold">
-              {enabledCount}
+              {enabledCount + departmentCount}
             </p>
           </div>
 
@@ -211,7 +216,7 @@ export function SlideSettingsEditor() {
             </p>
 
             <p className="mt-[5px] text-[26px] font-semibold">
-              {(intervalNumber || 0) * enabledCount}
+              {Math.round(((intervalNumber || 0) + 0.45) * (enabledCount + departmentCount))}
               <span className="ml-[5px] text-[11px] font-normal text-neutral-400">
                 soniya
               </span>
