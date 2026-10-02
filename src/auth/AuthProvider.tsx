@@ -13,6 +13,7 @@ import {
 } from "@supabase/supabase-js"
 
 import { getSupabase } from "@/lib/supabase"
+import { loginEmail } from "@/auth/loginIdentifier"
 
 import {
   AuthContext,
@@ -37,7 +38,7 @@ function signInErrorMessage(error: unknown): string {
 
   if (isAuthApiError(error)) {
     if (error.code === "invalid_credentials") {
-      return "Email yoki parol noto‘g‘ri."
+      return "Login yoki parol noto‘g‘ri."
     }
 
     if (
@@ -155,7 +156,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = useCallback(
     async (email: string, password: string) => {
       const { error } = await getSupabase().auth.signInWithPassword({
-        email: email.trim(),
+        email: loginEmail(email),
         password,
       })
 

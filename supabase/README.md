@@ -5,8 +5,8 @@
 - Project: `yia-tv-platform` (`ymztqfzujdwfkqrsqzyu`), Frankfurt; active and healthy.
 - API: `https://ymztqfzujdwfkqrsqzyu.supabase.co`.
 - Schema, storage, public TV and department migrations are applied.
-- Six accounts have roles: one Super Admin, one Press Admin, one Appeals Admin,
-  and three TV Viewers.
+- Two department accounts were added with only their intended role: `murojaatlar`
+  (Appeals Admin) and `hr2026` (HR Admin). Existing accounts were retained.
 - All nine public tables have row-level security enabled.
 - All seven content types have draft and published rows. Existing published data
   was preserved; no seed or initial import was rerun.
@@ -80,6 +80,10 @@ Keep passwords out of source files and chat. TVs no longer need accounts; the ex
 viewer accounts are retained but are not used by the public TV page.
 Set the Auth Site URL to the deployed origin before adding email redirect flows.
 The app currently signs in with email and password and does not expose public signup.
+Department usernames map to internal email identifiers before Supabase password
+sign-in. The shared `/admin` screen also accepts the Super Admin email. Both new
+accounts passed login, own-draft access and cross-department publish-denial tests.
+The temporary account provisioning function is disabled (HTTP 410, JWT required).
 The Auth settings endpoint currently reports `disable_signup=false`; the earlier
 setup notes claiming signups were disabled were stale. New accounts receive no
 application role and cannot access content. Disable new signups in the Supabase

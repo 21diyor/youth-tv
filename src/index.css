@@ -236,3 +236,47 @@
 .tv-empty { display: flex; align-items: center; justify-content: center; font-size: 36px; }
 .tv-progress-track { background: var(--tv-border); height: 8px; }
 [data-theme="dark"] .schedule-flag { opacity: .13; }
+
+/* Keep headings quiet; give the charts and quote the visual emphasis. */
+.tv-header h1 { font-size: 42px; }
+.tv-agency { font-size: 24px; }
+.schedule-flag { right: 350px; top: 8px; width: 310px; height: 172px; opacity: .7; filter: drop-shadow(0 10px 12px #17203322); transform: rotate(-5deg); }
+[data-theme="dark"] .schedule-flag { opacity: .55; }
+.tv-appeals-stats .tv-stat { padding: 24px 28px; }
+.tv-appeals-stats .tv-stat-value { font-size: 68px; margin-top: 16px; }
+.tv-appeals-stats .tv-stat-label { font-size: 28px; }
+.tv-charts { display: grid; grid-template-columns: 1.2fr 1fr; grid-template-rows: 1fr 1fr; gap: 24px; flex: 1; min-height: 0; }
+.tv-chart-panel { border: 1px solid var(--tv-border); border-radius: 26px; background: var(--tv-panel); padding: 22px 28px; min-height: 0; display: flex; flex-direction: column; }
+.tv-chart-panel h2 { font-size: 30px; font-weight: 650; margin-bottom: 8px; }
+.tv-trend { flex: 1; min-height: 0; }
+.tv-status-chart { display: flex; flex: 1; min-height: 0; align-items: center; justify-content: center; gap: 24px; }
+.tv-donut { position: relative; width: 220px; height: 220px; flex-shrink: 0; }
+.tv-donut strong { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 38px; }
+.tv-chart-legend { display: grid; gap: 22px; font-size: 26px; font-weight: 550; }
+.tv-chart-legend p { display: flex; align-items: center; gap: 14px; }
+.tv-chart-legend i { height: 16px; width: 16px; border-radius: 50%; flex-shrink: 0; }
+.tv-bar-list { flex: 1; display: flex; flex-direction: column; justify-content: space-around; }
+.tv-bar-row { display: grid; grid-template-columns: minmax(190px,.9fr) minmax(70px,1fr) 92px; align-items: center; gap: 18px; font-size: 26px; line-height: 1.15; }
+.tv-bar-row strong { font-size: 28px; text-align: right; }
+.tv-bar-track { height: 20px; border-radius: 5px; overflow: hidden; background: var(--tv-portrait); }
+.tv-bar-track div { height: 100%; border-radius: 5px; background: var(--tv-accent); }
+.tv-president { display: grid; grid-template-columns: .95fr 1.05fr; background: var(--tv-bg); color: var(--tv-text); }
+.tv-president-photo { position: relative; height: 1080px; overflow: hidden; background: var(--tv-portrait); }
+.tv-president-photo img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+.tv-president-photo span { position: absolute; bottom: 44px; left: 48px; color: white; font-size: 28px; text-shadow: 0 2px 8px #000; }
+.tv-president-copy { padding: 48px 62px; display: flex; flex-direction: column; min-width: 0; }
+.tv-president-quote { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+.tv-president-quote .tv-eyebrow { font-size: 28px; }
+.tv-president blockquote { font-size: 60px; font-weight: 550; line-height: 1.18; letter-spacing: -.035em; }
+.tv-president-attribution { margin-top: 38px; border-left: 4px solid var(--tv-accent); padding-left: 24px; }
+.tv-president-attribution p { font-size: 34px; font-weight: 700; }
+.tv-president-attribution span { display: block; color: var(--tv-muted); font-size: 28px; margin-top: 8px; }
+.tv-president-attribution small { display: block; color: var(--tv-muted); font-size: 24px; margin-top: 12px; }
+.tv-president footer { font-size: 26px; color: var(--tv-muted); border-top: 1px solid var(--tv-border); padding-top: 20px; }
+.admin-surface[data-admin-theme="dark"] { color-scheme: dark; background: #0b1423; color: #f1f5f9; --background: #152338; --foreground: #f1f5f9; --input: #475569; --border: #36485f; --muted-foreground: #becbdd; }
+.admin-surface[data-admin-theme="dark"] :is(aside,header,section,input,textarea,select,[class*="bg-white"]) { background-color: #152338; color: #f1f5f9; }
+.admin-surface[data-admin-theme="dark"] [class*="border-"] { border-color: #36485f; }
+.admin-surface[data-admin-theme="dark"] :is([class*="text-neutral-"],[class*="text-slate-"]) { color: #c0ccdc; }
+.admin-surface[data-admin-theme="dark"] :is([class*="text-blue-"],[class*="text-[#1D4ED8]"]) { color: #93c5fd; }
+.admin-surface[data-admin-theme="dark"] :is([class*="bg-neutral-"],[class*="bg-slate-"],[class*="bg-[#F0F4FF]"]) { background-color: #20324b; }
+.admin-surface[data-admin-theme="dark"] :is([class*="bg-red-"],[class*="bg-emerald-"]) { background-color: #20324b; }

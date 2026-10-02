@@ -8,6 +8,7 @@ function App() {
 
   // /admin: Supabase Auth first, then the admin content store.
   if (path.startsWith("/admin")) {
+    if (path !== "/admin") window.history.replaceState(null, "", "/admin")
     return (
       <AuthProvider>
         <AdminGate />

@@ -17,13 +17,15 @@ npm run dev
 
 - `/`: public TV slideshow; no account or password required.
 - `/admin`: administrator login, draft editing and publishing.
-- `/admin/hr` and `/admin/appeals`: department views using the same login.
+- All administrators sign in at `/admin`. Department usernames and Super Admin
+  email addresses use the same login field. Older department URLs return here.
 - `Saqlash` saves a draft; `E’lon qilish` publishes it to the TVs.
 - Arrow keys change slides.
 - The bottom progress line shows time remaining before the next animated slide.
 - TV mode uses large type and simplified content for viewing from a distance.
-  Schedule cards use a two-by-two layout. Detailed charts, achievements and
-  department text remain saved in the admin editors but are omitted on TV.
+  Schedule cards use a two-by-two layout. Appeals retain trend, status and bar
+  charts with large labels. Extra achievements and department text remain saved
+  in the admin editors but are omitted on TV.
 - TV colors follow Asia/Tashkent: light from 06:00 (inclusive) to 18:30,
   dark from 18:30 through 05:59. Open TVs check every second and on wake/resume;
   a theme change does not restart the slideshow or require a reload.
@@ -63,8 +65,13 @@ Save and publish to show changed portraits on TVs.
 Super Admin slideshow settings include all nine visibility switches. Each switch
 immediately changes visibility without publishing other draft edits. Incomplete
 slides must be completed and published before enabling them. The interval has its
-own publish button. Super Admin can open both department views from the sidebar;
-separate staff accounts need the appropriate role assigned in Supabase.
+own publish button. Each account sees its permitted editors after signing in.
+The admin light/dark button changes this browser's admin appearance and remembers
+the choice. TVs keep their automatic Tashkent schedule.
+
+Department logins `murojaatlar` and `hr2026` resolve to internal Supabase Auth
+identities and have only `appeals_admin` and `hr_admin` respectively. Passwords
+are managed in Supabase Auth and must never be stored in the repository.
 
 TVs retain a published-content snapshot for temporary backend outages after a
 successful load. This is not a full offline web app: a cold browser launch still

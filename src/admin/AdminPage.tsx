@@ -1,4 +1,5 @@
 import { OverviewContent } from "@/admin/OverviewContent"
+import { loginDisplayName } from "@/auth/loginIdentifier"
 import { ScheduleEditor, ManagersEditor, BirthdayEditor } from "@/admin/DepartmentEditors"
 import { useState } from "react"
 import { PresidentEditor } from "@/admin/PresidentEditor"
@@ -67,15 +68,19 @@ const menuItems: {
 
 export function AdminPage() {
   const { user, roles, signOut } = useAuth()
-  const department = window.location.pathname.startsWith("/admin/hr") ? "hr"
-    : window.location.pathname.startsWith("/admin/appeals") ? "appeals" : "all"
-  const departmentSections: Section[] | null = department === "hr" ? ["schedule", "employee", "birthday"]
-    : department === "appeals" ? ["appeals", "managers"] : null
+  const [adminTheme, setAdminTheme] = useState(() => {
+    try { return localStorage.getItem("youth-tv-admin-theme") === "dark" ? "dark" : "light" } catch { return "light" }
+  })
+  const toggleTheme = () => {
+    const next = adminTheme === "light" ? "dark" : "light"
+    setAdminTheme(next)
+    try { localStorage.setItem("youth-tv-admin-theme", next) } catch { /* Theme still works without storage. */ }
+  }
 
   // Menu follows the user's roles (union across roles). RLS is the real
   // protection; this only hides sections the user cannot act on.
   const visibleItems = menuItems.filter((item) =>
-    canSeeSection(item.id, roles) && (!departmentSections || departmentSections.includes(item.id))
+    canSeeSection(item.id, roles)
   ).sort((a, b) => {
     const order: Section[] = ["overview", "appeals", "managers", "schedule", "employee", "birthday", "president", "settings"]
     return order.indexOf(a.id) - order.indexOf(b.id)
@@ -104,7 +109,7 @@ export function AdminPage() {
   if (!visibleItems.length) return <main className="flex min-h-screen flex-col items-center justify-center gap-5 bg-slate-50"><h1 className="text-xl font-semibold">Bu bo‘lim uchun ruxsat mavjud emas</h1><a href="/admin" className="text-blue-700 underline">Admin paneliga qaytish</a></main>
 
   return (
-    <main className="min-h-screen bg-[#F5F5F3] text-[#171717]">
+    <main data-admin-theme={adminTheme} className="admin-surface min-h-screen bg-[#F5F5F3] text-[#171717]">
       <div className="grid min-h-screen grid-cols-[280px_1fr]">
 
         {/* SIDEBAR */}
@@ -115,16 +120,10 @@ export function AdminPage() {
             </p>
 
             <h1 className="mt-[7px] text-[22px] font-semibold tracking-[-0.035em]">
-              {department === "hr" ? "HR bo‘limi" : department === "appeals" ? "Murojaatlar bo‘limi" : roles.includes("super_admin") ? "Super Admin" : roles.includes("hr_admin") ? "HR bo‘limi" : roles.includes("appeals_admin") ? "Murojaatlar bo‘limi" : "TV boshqaruvi"}
+              {roles.includes("super_admin") ? "Super Admin" : roles.includes("hr_admin") ? "HR bo‘limi" : roles.includes("appeals_admin") ? "Murojaatlar bo‘limi" : "TV boshqaruvi"}
             </h1>
           </div>
 
-          <div className="mt-5 space-y-2 border-b border-slate-200 pb-5">
-            <p className="mb-3 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Admin panellari</p>
-            {roles.includes("super_admin") && <a href="/admin" className="block rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600">Super Admin · barcha bo‘limlar</a>}
-            {(roles.includes("super_admin") || roles.includes("hr_admin")) && <a href="/admin/hr" aria-current={department === "hr" ? "page" : undefined} className="block rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 aria-[current=page]:border-blue-300 aria-[current=page]:bg-blue-50">HR bo‘limi →</a>}
-            {(roles.includes("super_admin") || roles.includes("appeals_admin")) && <a href="/admin/appeals" aria-current={department === "appeals" ? "page" : undefined} className="block rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 aria-[current=page]:border-blue-300 aria-[current=page]:bg-blue-50">Murojaatlar bo‘limi →</a>}
-          </div>
           <nav className="mt-[22px] space-y-[4px]">
             {visibleItems.map((item) => {
               const active = currentItem.id === item.id
@@ -184,6 +183,7 @@ export function AdminPage() {
             </div>
 
             <div className="flex items-center gap-[12px]">
+              <button type="button" onClick={toggleTheme} aria-label="Admin mavzusini almashtirish" aria-pressed={adminTheme === "dark"} className="rounded-lg border border-neutral-200 bg-white px-4 py-2 text-sm font-semibold">{adminTheme === "dark" ? "☀ Yorug‘ rejim" : "☾ Tungi rejim"}</button>
               <a
                 href="/"
                 target="_blank"
@@ -202,7 +202,7 @@ export function AdminPage() {
               </button>
 
               <span className="text-[12px] text-neutral-500">
-                {user?.email}
+                {loginDisplayName(user?.email)}
               </span>
 
               <div

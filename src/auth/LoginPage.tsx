@@ -31,7 +31,7 @@ export function LoginPage() {
     setPassword(passwordValue)
 
     if (!emailValue || !passwordValue) {
-      setError("Email va parolni kiriting.")
+      setError("Login va parolni kiriting.")
       return
     }
 
@@ -60,7 +60,7 @@ export function LoginPage() {
         </h1>
 
         <p className="mt-[6px] text-[13px] leading-[1.6] text-neutral-500">
-          Boshqaruv paneliga kirish uchun hisob ma’lumotlaringizni kiriting.
+          Bo‘lim uchun login, Super Admin uchun email kiriting.
         </p>
 
         <form
@@ -69,12 +69,14 @@ export function LoginPage() {
           className="mt-[28px] space-y-[20px] border border-neutral-200 bg-white p-[26px]"
         >
           <div className="space-y-[8px]">
-            <Label htmlFor="login-email">Email</Label>
+            <Label htmlFor="login-email">Login yoki email</Label>
 
             <Input
               id="login-email"
               name="email"
-              type="email"
+              type="text"
+              autoCapitalize="none"
+              spellCheck={false}
               autoComplete="username"
               autoFocus
               value={email}
