@@ -4,6 +4,7 @@ import { EmployeeOfMonthSlide } from "@/slides/EmployeeOfMonthSlide"
 import { PresidentQuoteSlide } from "@/slides/PresidentQuoteSlide"
 import { BirthdaySlide, ManagementScheduleSlide, ManagerAppealsSlide } from "@/slides/DepartmentSlides"
 import { usePublishedContent } from "@/hooks/usePublishedContent"
+import { useTvTheme } from "@/hooks/useTvTheme"
 
 const TRANSITION_MS = 450
 
@@ -26,6 +27,7 @@ export function Slideshow() {
 }
 
 function Playback({ slides, duration }: { slides: { id: string; element: ReactNode }[]; duration: number }) {
+  const theme = useTvTheme()
   const [scale, setScale] = useState(() => Math.min(window.innerWidth / 1920, window.innerHeight / 1080))
   useEffect(() => {
     const resize = () => setScale(Math.min(window.innerWidth / 1920, window.innerHeight / 1080))
@@ -82,8 +84,8 @@ function Playback({ slides, duration }: { slides: { id: string; element: ReactNo
     }
   }, [ids])
 
-  if (!current) return <main className="flex min-h-screen items-center justify-center">Faol slayd mavjud emas</main>
-  return <div className="tv-playback">
+  if (!current) return <main className="tv-playback tv-empty" data-theme={theme}>Faol slayd mavjud emas</main>
+  return <div className="tv-playback" data-theme={theme}>
     <div className="tv-canvas" style={{ transform: `translate(-50%, -50%) scale(${scale})` }}>
     <div key={`${current.id}-${cycle}`} className={`tv-slide ${leaving ? "tv-slide-leaving" : "tv-slide-entering"}`}>
       {current.element}

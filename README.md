@@ -21,6 +21,12 @@ npm run dev
 - `Saqlash` saves a draft; `E’lon qilish` publishes it to the TVs.
 - Arrow keys change slides.
 - The bottom progress line shows time remaining before the next animated slide.
+- TV mode uses large type and simplified content for viewing from a distance.
+  Schedule cards use a two-by-two layout. Detailed charts, achievements and
+  department text remain saved in the admin editors but are omitted on TV.
+- TV colors follow Asia/Tashkent: light from 06:00 (inclusive) to 18:30,
+  dark from 18:30 through 05:59. Open TVs check every second and on wake/resume;
+  a theme change does not restart the slideshow or require a reload.
 - Order: citizen appeals, management schedule, four manager statistics slides,
   birthday, Employee of the Month, President quote. Disabled slides are skipped.
 - Calendar dates and the displayed employee month/year follow Asia/Tashkent

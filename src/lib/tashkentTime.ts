@@ -14,3 +14,13 @@ export function tashkentPeriod(now = new Date()) {
   const { month, year } = partsAtTashkent(now)
   return { month, year }
 }
+
+const clockFormatter = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "Asia/Tashkent", hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+})
+export function tashkentTheme(now = new Date()): "light" | "dark" {
+  const parts = clockFormatter.formatToParts(now)
+  const minutes = Number(parts.find(p => p.type === "hour")!.value) * 60
+    + Number(parts.find(p => p.type === "minute")!.value)
+  return minutes >= 360 && minutes < 1110 ? "light" : "dark"
+}
