@@ -1,280 +1,75 @@
 import { useState } from "react"
 import { usePublishedContent } from "@/hooks/usePublishedContent"
-
-import {
-  getSlideSettingsDraft,
-  type SlideSettings,
-} from "@/data/tvStore"
-
-import { DraftPublishActions } from "@/admin/DraftPublishActions"
-import { useDraftPublish } from "@/admin/useDraftPublish"
-
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { getDraft, getSaveErrorMessage, saveDraft, publish, setSlideVisibility } from "@/data/tvStore"
+import type { TvContentKey } from "@/data/tvTypes"
 
 export function SlideSettingsEditor() {
+  const settings = usePublishedContent("settings")
   const schedule = usePublishedContent("schedule")
   const managers = usePublishedContent("managers")
   const birthday = usePublishedContent("birthday")
-  const departmentCount = Number(schedule.enabled) + Number(birthday.enabled) + managers.managers.filter(m => m.enabled).length
-  const [initialSettings] = useState(getSlideSettingsDraft)
+  const [interval, setInterval] = useState(() => String(getDraft("settings").intervalSeconds))
+  const [busy, setBusy] = useState<string | null>(null)
+  const [error, setError] = useState("")
+  const [message, setMessage] = useState("")
+  const intervalNumber = Number(interval)
+  const valid = Number.isInteger(intervalNumber) && intervalNumber >= 5 && intervalNumber <= 300
+  const slides: { id: string; key: Exclude<TvContentKey, "settings">; index?: number; title: string; detail: string; enabled: boolean }[] = [
+    { id: "appeals", key: "appeals", title: "Fuqarolar murojaatlari", detail: "Umumiy statistika", enabled: settings.appealsEnabled },
+    { id: "schedule", key: "schedule", title: "Rahbariyat qabul jadvali", detail: "Rahbarlar kartochkalari va qabul vaqti", enabled: schedule.enabled },
+    ...managers.managers.map((manager, index) => ({ id: `manager-${index}`, key: "managers" as const, index, title: manager.name || `Rahbar ${index + 1}`, detail: "Rahbar murojaatlari", enabled: manager.enabled })),
+    { id: "birthday", key: "birthday", title: "Tug‘ilgan kun tabrigi", detail: birthday.name || "Xodim tabrigi", enabled: birthday.enabled },
+    { id: "employee", key: "employee", title: "Oy xodimi", detail: "Xodim ma’lumotlari va asosiy natijalar", enabled: settings.employeeEnabled },
+    { id: "president", key: "president", title: "Prezident fikri", detail: "Iqtibos va portret", enabled: settings.presidentEnabled },
+  ]
+  const count = slides.filter(slide => slide.enabled).length
 
-  const [interval, setInterval] = useState(
-    String(initialSettings.intervalSeconds)
-  )
-
-  const [presidentEnabled, setPresidentEnabled] =
-    useState(initialSettings.presidentEnabled)
-
-  const [appealsEnabled, setAppealsEnabled] =
-    useState(initialSettings.appealsEnabled)
-
-  const [employeeEnabled, setEmployeeEnabled] =
-    useState(initialSettings.employeeEnabled)
-
-  const enabledCount = [
-    presidentEnabled,
-    appealsEnabled,
-    employeeEnabled,
-  ].filter(Boolean).length
-
-  const intervalNumber = Number(interval) || 0
-
-  const intervalValid =
-    Number.isInteger(intervalNumber) && intervalNumber >= 5 && intervalNumber <= 300
-
-  const canSave =
-    enabledCount > 0 && intervalValid
-
-  const draft: SlideSettings = {
-    intervalSeconds: intervalNumber,
-    presidentEnabled,
-    appealsEnabled,
-    employeeEnabled,
+  const changeVisibility = async (slide: typeof slides[number]) => {
+    if (busy) return
+    setBusy(slide.id); setError(""); setMessage("")
+    try {
+      await setSlideVisibility(slide.key, !slide.enabled, slide.index ?? 0)
+      setMessage(`${slide.title}: ${slide.enabled ? "o‘chirildi" : "yoqildi"}.`)
+    } catch (err) { setError(getSaveErrorMessage(err)) }
+    finally { setBusy(null) }
   }
 
-  const draftPublish = useDraftPublish("settings", draft, canSave)
+  const saveInterval = async () => {
+    if (!valid || busy) return
+    setBusy("interval"); setError(""); setMessage("")
+    try {
+      await saveDraft("settings", { ...getDraft("settings"), intervalSeconds: intervalNumber })
+      await publish("settings")
+      setMessage("Interval saqlandi va TV ekranlariga yuborildi.")
+    } catch (err) { setError(getSaveErrorMessage(err)) }
+    finally { setBusy(null) }
+  }
 
-  return (
-    <div>
-      {/* HEADER */}
-      <div className="flex items-end justify-between">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.17em] text-neutral-400">
-            Tizim
-          </p>
-
-          <h3 className="mt-[5px] text-[32px] font-semibold tracking-[-0.045em]">
-            Slayd sozlamalari
-          </h3>
-
-          <p className="mt-[8px] max-w-[720px] text-[13px] leading-[1.6] text-neutral-500">
-            TV ekranlaridagi slaydlar tartibi va
-            avtomatik almashish vaqtini boshqarish.
-          </p>
-        </div>
-
-        <DraftPublishActions state={draftPublish} />
+  return <div>
+    <h3 className="text-[32px] font-semibold tracking-tight">Slayd sozlamalari</h3>
+    <p className="mt-2 text-sm text-slate-500">Namoyish vaqtini va barcha slaydlarning ko‘rinishini boshqaring.</p>
+    <section className="mt-8 rounded-xl border border-slate-200 bg-white p-6">
+      <label htmlFor="slide-interval" className="font-semibold">Har bir slayd davomiyligi</label>
+      <div className="mt-4 flex items-center gap-4">
+        <input id="slide-interval" className="w-32 rounded-lg border border-slate-200 px-4 py-2" type="number" min={5} max={300} step={1} value={interval} onChange={e => setInterval(e.target.value)} />
+        <span className="text-sm text-slate-500">soniya · 5–300</span>
+        <button onClick={saveInterval} disabled={!valid || !!busy} className="rounded-lg bg-blue-700 px-5 py-2 text-sm font-semibold text-white disabled:opacity-40">{busy === "interval" ? "Saqlanmoqda…" : "Intervalni e’lon qilish"}</button>
       </div>
-
-      {/* INTERVAL */}
-      <section className="mt-[34px] border border-neutral-200 bg-white">
-        <div className="border-b border-neutral-200 px-[26px] py-[20px]">
-          <h4 className="text-[15px] font-semibold">
-            Namoyish intervali
-          </h4>
-
-          <p className="mt-[3px] text-[11px] text-neutral-400">
-            Har bir slayd ekranda qancha vaqt turishini belgilang
-          </p>
-        </div>
-
-        <div className="p-[26px]">
-          <div className="max-w-[360px] space-y-[8px]">
-            <Label htmlFor="slide-interval">
-              Interval
-            </Label>
-
-            <div className="flex items-center gap-[12px]">
-              <Input
-                id="slide-interval"
-                type="number"
-                min="5"
-                max="300"
-                value={interval}
-                onChange={(event) =>
-                  setInterval(event.target.value)
-                }
-              />
-
-              <span className="shrink-0 text-[12px] text-neutral-500">
-                soniya
-              </span>
-            </div>
-
-            <p className="text-[10px] text-neutral-400">
-              Minimal 5 soniya · Maksimal 300 soniya
-            </p>
-
-            {!intervalValid && (
-              <p className="text-[11px] font-medium text-red-600">
-                Interval 5–300 soniya oralig‘ida bo‘lishi kerak.
-              </p>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* SLIDES */}
-      <section className="mt-[28px] border border-neutral-200 bg-white">
-        <div className="border-b border-neutral-200 px-[26px] py-[20px]">
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="text-[15px] font-semibold">
-                Asosiy slaydlar
-              </h4>
-
-              <p className="mt-[3px] text-[11px] text-neutral-400">
-                Jadval, rahbarlar va tabrik slaydlari o‘z bo‘limlarida yoqiladi
-              </p>
-            </div>
-
-            <span className="text-[11px] font-medium text-neutral-400">
-              {enabledCount} / 3 faol
-            </span>
-          </div>
-        </div>
-
-        <div>
-          <SlideToggle
-            number="09"
-            title="Prezident fikri"
-            description="Prezident iqtibosi va portreti"
-            checked={presidentEnabled}
-            onChange={setPresidentEnabled}
-          />
-
-          <SlideToggle
-            number="01"
-            title="Fuqarolar murojaatlari"
-            description="Statistika va analitik ko‘rsatkichlar"
-            checked={appealsEnabled}
-            onChange={setAppealsEnabled}
-          />
-
-          <SlideToggle
-            number="08"
-            title="Oy xodimi"
-            description="Xodim ma’lumotlari va asosiy natijalar"
-            checked={employeeEnabled}
-            onChange={setEmployeeEnabled}
-          />
-        </div>
-      </section>
-
-      {enabledCount === 0 && (
-        <div className="mt-[18px] border border-red-200 bg-red-50 px-[20px] py-[15px]">
-          <p className="text-[12px] font-semibold text-red-700">
-            Kamida bitta slayd faol bo‘lishi kerak.
-          </p>
-        </div>
-      )}
-
-      {/* SUMMARY */}
-      <section className="mt-[28px] border border-neutral-200 bg-white px-[26px] py-[22px]">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.17em] text-neutral-400">
-          Joriy konfiguratsiya
-        </p>
-
-        <div className="mt-[16px] grid grid-cols-3">
-          <div>
-            <p className="text-[11px] text-neutral-400">
-              Faol slaydlar
-            </p>
-
-            <p className="mt-[5px] text-[26px] font-semibold">
-              {enabledCount + departmentCount}
-            </p>
-          </div>
-
-          <div className="border-l border-neutral-200 pl-[26px]">
-            <p className="text-[11px] text-neutral-400">
-              Interval
-            </p>
-
-            <p className="mt-[5px] text-[26px] font-semibold">
-              {intervalNumber || 0}
-              <span className="ml-[5px] text-[11px] font-normal text-neutral-400">
-                soniya
-              </span>
-            </p>
-          </div>
-
-          <div className="border-l border-neutral-200 pl-[26px]">
-            <p className="text-[11px] text-neutral-400">
-              To‘liq sikl
-            </p>
-
-            <p className="mt-[5px] text-[26px] font-semibold">
-              {Math.round(((intervalNumber || 0) + 0.45) * (enabledCount + departmentCount))}
-              <span className="ml-[5px] text-[11px] font-normal text-neutral-400">
-                soniya
-              </span>
-            </p>
-          </div>
-        </div>
-      </section>
-    </div>
-  )
-}
-
-function SlideToggle({
-  number,
-  title,
-  description,
-  checked,
-  onChange,
-}: {
-  number: string
-  title: string
-  description: string
-  checked: boolean
-  onChange: (checked: boolean) => void
-}) {
-  return (
-    <div className="grid grid-cols-[46px_1fr_auto] items-center border-b border-neutral-200 px-[26px] py-[20px] last:border-b-0">
-      <span className="text-[11px] font-semibold text-neutral-400">
-        {number}
-      </span>
-
-      <div>
-        <p className="text-[13px] font-semibold">
-          {title}
-        </p>
-
-        <p className="mt-[3px] text-[11px] text-neutral-400">
-          {description}
-        </p>
-      </div>
-
-      <button
-        type="button"
-        onClick={() => onChange(!checked)}
-        className={`relative h-[24px] w-[44px] rounded-full transition-colors ${
-          checked
-            ? "bg-[#1D4ED8]"
-            : "bg-neutral-300"
-        }`}
-        aria-pressed={checked}
-      >
-        <span
-          className={`absolute top-[3px] h-[18px] w-[18px] rounded-full bg-white transition-all ${
-            checked
-              ? "left-[23px]"
-              : "left-[3px]"
-          }`}
-        />
-      </button>
-    </div>
-  )
+    </section>
+    <div className="mt-4 min-h-6 text-sm" role="status" aria-live="polite">{error ? <span className="text-red-700">{error}</span> : <span className="text-emerald-700">{message}</span>}</div>
+    <section className="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-white">
+      <header className="flex items-center justify-between border-b border-slate-200 p-6">
+        <div><h4 className="font-semibold">Barcha slaydlar</h4><p className="mt-2 text-xs text-slate-500">Tugmalar darhol qo‘llanadi. Faqat ko‘rinish o‘zgaradi; boshqa qoralamalar e’lon qilinmaydi.</p></div>
+        <span className="ml-5 shrink-0 text-sm font-semibold text-blue-700">{count} / {slides.length} faol</span>
+      </header>
+      {slides.map((slide, i) => <div key={slide.id} className="grid grid-cols-[46px_1fr_auto] items-center gap-4 border-b border-slate-100 px-6 py-5 last:border-b-0">
+        <span className="text-xs font-semibold text-slate-400">{String(i + 1).padStart(2, "0")}</span>
+        <div><p className="text-sm font-semibold">{slide.title}</p><p className="mt-1 text-xs text-slate-500">{slide.detail}</p></div>
+        <button type="button" role="switch" aria-label={slide.title} aria-checked={slide.enabled} disabled={!!busy} onClick={() => changeVisibility(slide)} className={`relative h-6 w-11 rounded-full transition-colors disabled:opacity-40 ${slide.enabled ? "bg-blue-700" : "bg-slate-300"}`}>
+          <span className={`absolute top-[3px] h-[18px] w-[18px] rounded-full bg-white transition-all ${slide.enabled ? "left-[23px]" : "left-[3px]"}`} />
+        </button>
+      </div>)}
+    </section>
+    <p className="mt-5 text-sm text-slate-500">{count ? `To‘liq sikl: taxminan ${Math.round((settings.intervalSeconds + .45) * count)} soniya.` : "Barcha slaydlar o‘chirilgan. TV ekranida faol slayd yo‘qligi ko‘rsatiladi."}</p>
+  </div>
 }

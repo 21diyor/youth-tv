@@ -156,8 +156,14 @@ export function saveDraft<K extends TvContentKey>(
 }
 
 /** Copy the saved draft to the TVs. */
-export function publish(key: TvContentKey): Promise<void> {
-  return adapter.publish(key)
+export async function publish(key: TvContentKey): Promise<void> {
+  await adapter.publish(key)
+  if (adapter.name === "local") notify(key)
+}
+
+export async function setSlideVisibility(key: Exclude<TvContentKey, "settings">, enabled: boolean, index = 0) {
+  await adapter.setVisibility(key, enabled, index)
+  notify(["president", "appeals", "employee"].includes(key) ? "settings" : key)
 }
 
 export type PublishState = {

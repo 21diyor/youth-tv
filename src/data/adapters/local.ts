@@ -4,6 +4,7 @@ import type {
   TvContentMap,
   TvDataAdapter,
 } from "@/data/tvTypes"
+import { getDraft, getPublished } from "@/data/tvStore"
 
 // Published keys are unchanged from the original prototype: they hold the
 // content the TVs are showing right now, so existing browsers keep working.
@@ -119,6 +120,20 @@ export const localAdapter: TvDataAdapter = {
         "E’lon qilib bo‘lmadi: brauzer xotirasi mavjud emas yoki to‘lgan. TV ekranidagi ma’lumot o‘zgarmadi."
       )
     }
+  },
+
+  async setVisibility(key, enabled, index) {
+    const contentKey = ["president", "appeals", "employee"].includes(key) ? "settings" : key
+    const patch = (value: TvContentMap[TvContentKey]) => {
+      if (contentKey === "settings") return { ...value, [key + "Enabled"]: enabled }
+      if (key === "managers") {
+        const managers = (value as TvContentMap["managers"]).managers.map((m, i) => i === index ? { ...m, enabled } : m)
+        return { managers }
+      }
+      return { ...value, enabled }
+    }
+    localStorage.setItem(localDraftStorageKeys[contentKey], JSON.stringify(patch(getDraft(contentKey))))
+    localStorage.setItem(localStorageKeys[contentKey], JSON.stringify(patch(getPublished(contentKey))))
   },
 
   // The browser "storage" event fires only in *other* tabs of the same

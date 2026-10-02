@@ -595,6 +595,21 @@ export const supabaseAdapter: TvDataAdapter = {
     applyPublished(key, result.row, true)
   },
 
+  async setVisibility(key, enabled, index) {
+    const { error } = await getSupabase().rpc("set_slide_visibility", {
+      _key: key, _enabled: enabled, _index: index,
+    })
+    if (error) {
+      if (error.code === "23514") throw new Error("Slayd ma’lumotlarini to‘ldiring va e’lon qiling, so‘ng uni yoqing.")
+      throw new Error(saveErrorMessage(error))
+    }
+    const contentKey = ["president", "appeals", "employee"].includes(key) ? "settings" : key
+    const [published, draft] = await Promise.all([selectRow(contentKey, "published"), selectRow(contentKey, "draft")])
+    if (!published.row || !draft.row) throw new Error("O‘zgarish yuborildi. Holatni tekshirish uchun sahifani yangilang.")
+    applyDraft(contentKey, draft.row)
+    applyPublished(contentKey, published.row, true)
+  },
+
   subscribePublished(onChange) {
     listeners.add(onChange)
 

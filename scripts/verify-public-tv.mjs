@@ -12,8 +12,10 @@ for (const table of tables) {
   assert.ifError(error)
   assert.equal(data.length, 1, `${table}: only one visible row`)
   assert.equal(data[0].status, 'published')
-  const path = data[0].photo_path ?? data[0].portrait_path ?? data[0].payload?.photoPath
-  if (path) {
+  const paths = [data[0].photo_path, data[0].portrait_path, data[0].payload?.photoPath,
+    ...(data[0].payload?.entries ?? []).map(entry => entry.photoPath),
+    ...(data[0].payload?.managers ?? []).map(entry => entry.photoPath)].filter(Boolean)
+  for (const path of paths) {
     const image = await client.storage.from('tv-media').download(path)
     assert.ifError(image.error)
     assert.ok(image.data.size > 0, `${table}: published image downloads`)

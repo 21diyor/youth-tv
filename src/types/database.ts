@@ -467,6 +467,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      set_slide_visibility: {
+        Args: { _enabled: boolean; _index?: number; _key: string }
+        Returns: undefined
+      }
       valid_department_content: {
         Args: { kind: string; value: Json }
         Returns: boolean

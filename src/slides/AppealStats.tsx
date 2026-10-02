@@ -7,8 +7,8 @@ const statusStyles = [
   { background: "linear-gradient(125deg, #fff1f2, #fecdd3)", color: "#9f1239" },
 ]
 const icons = [Files, CheckCircle2, Clock3, TriangleAlert]
-export function AppealStats({ total, resolved, inProgress, overdue }: { total: number; resolved: number; inProgress: number; overdue: number }) {
-  return <div className="grid grid-cols-4 gap-4">
+export function AppealStats({ total, resolved, inProgress, overdue, twoColumns = false }: { total: number; resolved: number; inProgress: number; overdue: number; twoColumns?: boolean }) {
+  return <div className={`grid gap-4 ${twoColumns ? "grid-cols-2" : "grid-cols-4"}`}>
     {[["Jami murojaatlar", total], ["Hal etilgan", resolved], ["Jarayonda", inProgress], ["Muddati o‘tgan", overdue]].map(([label, value], i) => {
       const Icon = icons[i]
       return <div key={label} className="rounded-2xl border border-black/5 p-5" style={statusStyles[i]}>

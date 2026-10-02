@@ -298,9 +298,6 @@ export async function updateDraftRow<K extends TvContentKey>(
         .from("slide_settings")
         .update({
           interval_seconds: v.intervalSeconds,
-          president_enabled: v.presidentEnabled,
-          appeals_enabled: v.appealsEnabled,
-          employee_enabled: v.employeeEnabled,
         })
         .eq("status", "draft")
         .select()

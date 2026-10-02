@@ -25,6 +25,8 @@ begin
       and not exists (select 1 from public.president_content p where p.status='published' and p.portrait_path=o.name)
       and not exists (select 1 from public.employee_content e where e.status='published' and e.photo_path=o.name)
       and not exists (select 1 from public.birthday_content b where b.status='published' and b.payload->>'photoPath'=o.name)
+      and not exists (select 1 from public.schedule_content s,jsonb_array_elements(s.payload->'entries') e where s.status='published' and e->>'photoPath'=o.name)
+      and not exists (select 1 from public.managers_content m,jsonb_array_elements(m.payload->'managers') e where m.status='published' and e->>'photoPath'=o.name)
   ) then raise exception 'Unpublished media is exposed'; end if;
 end $test$;
 rollback;

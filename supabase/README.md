@@ -1,6 +1,6 @@
 # Supabase — Youth TV
 
-## Verified 2026-10-01
+## Verified 2026-10-02
 
 - Project: `yia-tv-platform` (`ymztqfzujdwfkqrsqzyu`), Frankfurt; active and healthy.
 - API: `https://ymztqfzujdwfkqrsqzyu.supabase.co`.
@@ -13,9 +13,10 @@
 - Realtime publishes all seven content tables. Clients subscribe to published updates.
 - HR owns schedule, employee and birthday content. Appeals owns citizen and manager
   statistics. Super Admin owns all content. Legacy Press Admin retains the quote.
-- The four user-provided manager names/titles are saved in manager and schedule
-  drafts. New slides remain disabled pending real counts, schedule and birthday
-  details. No account has been reassigned to HR.
+- The user has published manager statistics, schedule and birthday content.
+  No account has been reassigned to HR.
+- Schedule and manager portraits are supported by the private media policies.
+  Super Admin can switch all nine slides without publishing unrelated drafts.
 - `tv-media` is private, limited to 5 MB JPG/PNG/WebP files.
 - Local configuration uses the Supabase backend.
 
@@ -32,6 +33,7 @@ write/publish operations remain protected. The storage bucket remains private.
 | `migrations/20261001084833_public_tv_read_access.sql` | `20261001084850` | `public_tv_read_access` |
 | `migrations/20261001130042_hr_role.sql` | `20261001130224` | `hr_role` |
 | `migrations/20261001130045_department_slides.sql` | `20261001130238` | `department_slides` |
+| `migrations/20261001153328_manager_portraits_and_visibility.sql` | `20261001153447` | `manager_portraits_and_visibility` |
 
 The existing files predate their remote application timestamps. Their historical
 headers say proposed/not applied; current remote history confirms both are applied.
@@ -47,11 +49,14 @@ identity inside a transaction; all role and content writes were rolled back.
 Anonymous access and department validation tests also passed.
 Anonymous users cannot execute any public SECURITY DEFINER function.
 
-The security advisor reports thirteen authenticated SECURITY DEFINER RPC/helper warnings.
+The visibility permissions and preservation tests passed with all writes rolled back.
+The security advisor reports fourteen authenticated SECURITY DEFINER RPC/helper warnings.
 The helpers check `auth.uid()` against the role table; publish functions enforce the
 required role and use an empty search path. These functions support atomic publishing
 and role lookups. They were reviewed and retained. Leaked-password protection is
 reported disabled and should be reviewed by the account administrator.
+See the [function advisor guidance](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable)
+and [password protection guidance](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection).
 
 ## Existing browser-local installations
 

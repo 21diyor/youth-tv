@@ -51,8 +51,8 @@ export type SlideSettings = {
   employeeEnabled: boolean
 }
 
-export type ScheduleContent = { enabled: boolean; entries: { name: string; title: string; day: string; time: string; location: string }[] }
-export type ManagerStatistics = { enabled: boolean; name: string; title: string; total: number; resolved: number; inProgress: number; overdue: number }
+export type ScheduleContent = { enabled: boolean; entries: { name: string; title: string; day: string; time: string; location: string; photoPath?: string | null }[] }
+export type ManagerStatistics = { enabled: boolean; name: string; title: string; total: number; resolved: number; inProgress: number; overdue: number; photoPath?: string | null }
 export type ManagersContent = { managers: ManagerStatistics[] }
 export type BirthdayContent = { enabled: boolean; name: string; department: string; message: string; photoPath: string | null }
 
@@ -136,6 +136,9 @@ export interface TvDataAdapter {
    * admin-safe Error message; on failure published content is unchanged.
    */
   publish(key: TvContentKey): Promise<void>
+
+  /** Change visibility only, preserving unrelated drafts and published content. */
+  setVisibility(key: Exclude<TvContentKey, "settings">, enabled: boolean, index: number): Promise<void>
 
   /**
    * Report changes to PUBLISHED content (another tab for local, realtime

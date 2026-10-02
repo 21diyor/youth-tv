@@ -57,7 +57,7 @@ export function EmployeeOfMonthSlide() {
           <section className="mt-[32px] grid min-h-0 flex-1 grid-cols-[0.82fr_1.18fr] gap-[58px]">
 
             {/* PHOTO (published) / PLACEHOLDER */}
-            <div className="relative min-h-0 overflow-hidden bg-[#E8E8E5]">
+            <div className="relative min-h-0 overflow-hidden rounded-[32px] bg-[#E8E8E5]">
               {photo.url && (
                 <>
                   <img

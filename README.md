@@ -17,6 +17,7 @@ npm run dev
 
 - `/`: public TV slideshow; no account or password required.
 - `/admin`: administrator login, draft editing and publishing.
+- `/admin/hr` and `/admin/appeals`: department views using the same login.
 - `Saqlash` saves a draft; `E’lon qilish` publishes it to the TVs.
 - Arrow keys change slides.
 - The bottom progress line shows time remaining before the next animated slide.
@@ -49,6 +50,16 @@ Accounts and roles are managed by an administrator in Supabase. Database row-lev
 security enforces permissions independently of the frontend. Uploaded JPG, PNG
 and WebP images use the private `tv-media` bucket (maximum 5 MB).
 
+Upload each manager's portrait in HR → Management schedule. Manager appeals slides
+reuse that portrait unless a separate photo is uploaded in the appeals editor.
+Save and publish to show changed portraits on TVs.
+
+Super Admin slideshow settings include all nine visibility switches. Each switch
+immediately changes visibility without publishing other draft edits. Incomplete
+slides must be completed and published before enabling them. The interval has its
+own publish button. Super Admin can open both department views from the sidebar;
+separate staff accounts need the appropriate role assigned in Supabase.
+
 TVs retain a published-content snapshot for temporary backend outages after a
 successful load. This is not a full offline web app: a cold browser launch still
 needs the frontend assets, and uncached private images require connectivity.
@@ -72,6 +83,8 @@ API reads, published image downloads and the Realtime subscription.
 `supabase/tests/department-content.sql` verifies JSON validation for the new
 content tables using fixtures. Department access is also enforced by publish RPC
 guards and media policies.
+`supabase/tests/slide-visibility.sql` verifies visibility permissions and that
+switching slides preserves unrelated draft and published fields (rolled back).
 
 All administrators use `/admin`; their role determines the department panel.
 Existing accounts are not reassigned automatically when adding HR. Grant

@@ -1,6 +1,8 @@
 import { useState, type ReactNode } from "react"
 import { getDraft } from "@/data/tvStore"
-import { uploadBirthdayPhoto, useMediaUrl } from "@/data/media"
+import { uploadBirthdayPhoto, uploadSchedulePortrait, uploadManagerPortrait, useMediaUrl } from "@/data/media"
+import { usePublishedContent } from "@/hooks/usePublishedContent"
+import { PortraitUpload } from "./PortraitUpload"
 import { useDraftPublish } from "./useDraftPublish"
 import { DraftPublishActions } from "./DraftPublishActions"
 import { ImageUploadControl } from "./ImageUploadControl"
@@ -20,20 +22,23 @@ function EditorFrame({ title, actions, children }: { title: string; actions: Rea
 const panel = "space-y-5 rounded-xl border border-slate-200 bg-white p-6"
 
 export function ScheduleEditor() {
-  const [draft, setDraft] = useState(() => getDraft("schedule"))
-  const valid = !draft.enabled || draft.entries.every(row => Object.values(row).every(value => value.trim().length > 0))
+  const [initial] = useState(() => getDraft("schedule"))
+  const [draft, setDraft] = useState(initial)
+  const valid = !draft.enabled || draft.entries.every(row => [row.name, row.title, row.day, row.time, row.location].every(value => value.trim().length > 0))
   const actions = useDraftPublish("schedule", draft, valid)
   return <EditorFrame title="Rahbariyat qabul jadvali" actions={<DraftPublishActions state={actions} />}>
     <Enabled checked={draft.enabled} onChange={enabled => setDraft({ ...draft, enabled })} />
     {!valid && <p role="alert" className="text-sm text-red-700">Jadvalni yoqish uchun barcha maydonlarni to‘ldiring.</p>}
     {draft.entries.map((row, i) => <section key={i} className={panel}><h4 className="font-semibold">Rahbar {i + 1}</h4><div className="grid grid-cols-2 gap-5">
       {([["name", "Ism familiya"], ["title", "Lavozimi"], ["day", "Qabul kuni (masalan, Dushanba)"], ["time", "Qabul vaqti (masalan, 10:00–12:00)"], ["location", "Qabul manzili"]] as const).map(([key, label]) => <Field key={key} label={label} value={row[key]} onChange={value => setDraft({ ...draft, entries: draft.entries.map((entry, index) => index === i ? { ...entry, [key]: value } : entry) })} />)}
-    </div></section>)}
+    </div><PortraitUpload path={row.photoPath} initialPath={initial.entries[i].photoPath} upload={uploadSchedulePortrait} onUploaded={photoPath => setDraft({ ...draft, entries: draft.entries.map((entry,index) => index === i ? { ...entry, photoPath } : entry) })} hint="Ushbu rasm rahbarning murojaatlar slaydida ham ishlatiladi, agar u yerda alohida rasm tanlanmagan bo‘lsa." /></section>)}
   </EditorFrame>
 }
 
 export function ManagersEditor() {
-  const [draft, setDraft] = useState(() => getDraft("managers"))
+  const [initial] = useState(() => getDraft("managers"))
+  const [draft, setDraft] = useState(initial)
+  const schedule = usePublishedContent("schedule")
   const valid = draft.managers.every(row =>
     [row.total, row.resolved, row.inProgress, row.overdue].every(n => Number.isInteger(n) && n >= 0 && n <= 2147483647)
     && row.total === row.resolved + row.inProgress + row.overdue
@@ -47,6 +52,7 @@ export function ManagersEditor() {
       return <section key={i} className={panel}><div className="flex justify-between"><h4 className="font-semibold">Rahbar {i + 1}</h4><Enabled checked={row.enabled} onChange={value => update("enabled", value)} /></div>
         <div className="grid grid-cols-2 gap-5"><Field label="Ism familiya" value={row.name} onChange={v => update("name", v)} /><Field label="Lavozimi" value={row.title} onChange={v => update("title", v)} /></div>
         <div className="grid grid-cols-4 gap-4">{([["total", "Jami"], ["resolved", "Hal etilgan"], ["inProgress", "Jarayonda"], ["overdue", "Muddati o‘tgan"]] as const).map(([key, label]) => <Field key={key} label={label} numeric value={row[key]} onChange={v => update(key, v === "" ? 0 : Number(v))} />)}</div>
+        <PortraitUpload path={row.photoPath} initialPath={initial.managers[i].photoPath} fallback={schedule.entries[i]?.photoPath} upload={uploadManagerPortrait} onUploaded={path => update("photoPath",path)} hint="Alohida rasm tanlanmasa, qabul jadvalidagi portret ko‘rsatiladi." />
       </section>
     })}
   </EditorFrame>
