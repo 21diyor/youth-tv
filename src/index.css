@@ -288,3 +288,6 @@
 .tv-controls button:disabled { opacity: .4; }
 .tv-controls p { position: absolute; bottom: 100%; left: 0; right: 0; padding: 14px; background: var(--tv-panel); border-radius: 12px; }
 @media (max-width: 600px) { .tv-controls button span { display: none; } }
+
+.tv-frame .schedule-flag { position: absolute; top: -95px; right: -95px; width: 700px; height: 700px; object-fit: contain; transform: none; opacity: .34; filter: none; pointer-events: none; z-index: 0; }
+.tv-playback[data-theme="dark"] .tv-frame .schedule-flag { opacity: .24; }
