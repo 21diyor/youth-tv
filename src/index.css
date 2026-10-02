@@ -291,3 +291,7 @@
 
 .tv-frame .schedule-flag { position: absolute; top: -95px; right: -95px; width: 700px; height: 700px; object-fit: contain; transform: none; opacity: .34; filter: none; pointer-events: none; z-index: 0; }
 .tv-playback[data-theme="dark"] .tv-frame .schedule-flag { opacity: .24; }
+
+/* Let the decorative fabric cross the canvas letterbox margin to the viewport. */
+.tv-canvas main.tv-frame { overflow: visible; }
+.tv-frame .schedule-flag { right: calc(-95px - var(--tv-side-margin, 0px)); width: calc(700px + var(--tv-side-margin, 0px)); object-fit: fill; }

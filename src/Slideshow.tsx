@@ -29,9 +29,11 @@ export function Slideshow() {
 
 function Playback({ slides, duration }: { slides: { id: string; element: ReactNode }[]; duration: number }) {
   const theme = useTvTheme()
-  const [scale, setScale] = useState(() => Math.min(window.innerWidth / 1920, window.innerHeight / 1080))
+  const [viewport, setViewport] = useState(() => ({ width: window.innerWidth, height: window.innerHeight }))
+  const scale = Math.min(viewport.width / 1920, viewport.height / 1080)
+  const sideMargin = Math.max(0, (viewport.width / scale - 1920) / 2)
   useEffect(() => {
-    const resize = () => setScale(Math.min(window.innerWidth / 1920, window.innerHeight / 1080))
+    const resize = () => setViewport({ width: window.innerWidth, height: window.innerHeight })
     window.addEventListener("resize", resize)
     return () => window.removeEventListener("resize", resize)
   }, [])
@@ -143,7 +145,7 @@ function Playback({ slides, duration }: { slides: { id: string; element: ReactNo
 
   if (!current) return <main className="tv-playback tv-empty" data-theme={theme}>Faol slayd mavjud emas</main>
   return <div className="tv-playback" data-theme={theme}>
-    <div className="tv-canvas" style={{ transform: `translate(-50%, -50%) scale(${scale})` }}>
+    <div className="tv-canvas" style={{ transform: `translate(-50%, -50%) scale(${scale})`, ...{ "--tv-side-margin": `${sideMargin}px` } }}>
     <div key={`${current.id}-${cycle}`} className={`tv-slide ${leaving ? "tv-slide-leaving" : "tv-slide-entering"}`}>
       {current.element}
     </div>
