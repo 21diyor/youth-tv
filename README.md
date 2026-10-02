@@ -21,6 +21,9 @@ npm run dev
   email addresses use the same login field. Older department URLs return here.
 - `Saqlash` saves a draft; `E’lon qilish` publishes it to the TVs.
 - Arrow keys change slides.
+- Bottom controls provide Previous, Pause/Play, Next and Fullscreen. Space pauses
+  playback; the timer and progress bar resume where they stopped. Controls fade
+  after six seconds and reappear on pointer, touch or keyboard interaction.
 - The bottom progress line shows time remaining before the next animated slide.
 - TV mode uses large type and simplified content for viewing from a distance.
   Schedule cards use a two-by-two layout. Appeals retain trend, status and bar

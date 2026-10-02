@@ -5,6 +5,7 @@ import { PresidentQuoteSlide } from "@/slides/PresidentQuoteSlide"
 import { BirthdaySlide, ManagementScheduleSlide, ManagerAppealsSlide } from "@/slides/DepartmentSlides"
 import { usePublishedContent } from "@/hooks/usePublishedContent"
 import { useTvTheme } from "@/hooks/useTvTheme"
+import { ChevronLeft, ChevronRight, Pause, Play, Maximize, Minimize } from "lucide-react"
 
 const TRANSITION_MS = 450
 
@@ -39,6 +40,12 @@ function Playback({ slides, duration }: { slides: { id: string; element: ReactNo
   const [activeId, setActiveId] = useState("appeals")
   const [cycle, setCycle] = useState(0)
   const [leaving, setLeaving] = useState(false)
+  const [paused, setPaused] = useState(false)
+  const [fullscreen, setFullscreen] = useState(!!document.fullscreenElement)
+  const [controlMessage, setControlMessage] = useState("")
+  const [controlsVisible, setControlsVisible] = useState(true)
+  const remaining = useRef(duration)
+  const timedCycle = useRef(0)
   const activeIndex = Math.max(0, slides.findIndex(slide => slide.id === activeId))
   const current = slides[activeIndex]
   const currentId = current?.id
@@ -61,15 +68,65 @@ function Playback({ slides, duration }: { slides: { id: string; element: ReactNo
   }, [ids, currentId])
 
   useEffect(() => {
-    const timeout = window.setTimeout(() => advance(1), duration)
-    return () => window.clearTimeout(timeout)
-  }, [advance, duration, cycle])
+    if (timedCycle.current !== cycle) {
+      timedCycle.current = cycle
+      remaining.current = duration
+    }
+    if (paused || leaving || !currentId) return
+    const started = performance.now()
+    const timeout = window.setTimeout(() => advance(1), remaining.current)
+    return () => {
+      window.clearTimeout(timeout)
+      remaining.current = Math.max(0, remaining.current - (performance.now() - started))
+    }
+  }, [advance, duration, cycle, paused, leaving, currentId])
+
+  useEffect(() => {
+    const refresh = () => setFullscreen(!!document.fullscreenElement)
+    document.addEventListener("fullscreenchange", refresh)
+    return () => document.removeEventListener("fullscreenchange", refresh)
+  }, [])
+
+  useEffect(() => {
+    let hide: number
+    const show = () => {
+      setControlsVisible(true)
+      window.clearTimeout(hide)
+      hide = window.setTimeout(() => setControlsVisible(false), 6000)
+    }
+    show()
+    window.addEventListener("pointermove", show)
+    window.addEventListener("pointerdown", show)
+    window.addEventListener("keydown", show)
+    return () => {
+      window.clearTimeout(hide)
+      window.removeEventListener("pointermove", show)
+      window.removeEventListener("pointerdown", show)
+      window.removeEventListener("keydown", show)
+    }
+  }, [])
+
+  const toggleFullscreen = async () => {
+    setControlMessage("")
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen()
+      else if (document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen()
+      else setControlMessage("Bu brauzer to‘liq ekran rejimini qo‘llamaydi.")
+    } catch {
+      setControlMessage("To‘liq ekran ochilmadi. Brauzer menyusidan foydalaning.")
+    }
+  }
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
+      if (event.target instanceof HTMLElement && event.target.closest("input,textarea,select,[contenteditable=true]")) return
       if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
         event.preventDefault()
         advance(event.key === "ArrowRight" ? 1 : -1)
+      }
+      if (event.code === "Space" && !(event.target instanceof HTMLElement && event.target.closest("button"))) {
+        event.preventDefault()
+        setPaused(value => !value)
       }
     }
     window.addEventListener("keydown", onKey)
@@ -92,7 +149,14 @@ function Playback({ slides, duration }: { slides: { id: string; element: ReactNo
     </div>
     </div>
     <div className="tv-progress-track" aria-hidden="true">
-      <div key={`${current.id}-${ids}-${cycle}-${duration}`} className="tv-progress-fill" style={{ animationDuration: `${duration}ms` }} />
+      <div key={`${current.id}-${ids}-${cycle}-${duration}`} className="tv-progress-fill" style={{ animationDuration: `${duration}ms`, animationPlayState: paused || leaving ? "paused" : "running" }} />
     </div>
+    <nav className={`tv-controls ${controlsVisible || paused || controlMessage ? "is-visible" : ""}`} aria-label="Slayd boshqaruvi">
+      <button onClick={() => advance(-1)} disabled={leaving} aria-label="Oldingi slayd" title="Oldingi slayd"><ChevronLeft /><span>Oldingi</span></button>
+      <button onClick={() => setPaused(value => !value)} aria-label={paused ? "Davom ettirish" : "Pauza"} aria-pressed={paused}>{paused ? <Play /> : <Pause />}<span>{paused ? "Davom ettirish" : "Pauza"}</span></button>
+      <button onClick={() => advance(1)} disabled={leaving} aria-label="Keyingi slayd" title="Keyingi slayd"><span>Keyingi</span><ChevronRight /></button>
+      <button onClick={toggleFullscreen} aria-label={fullscreen ? "To‘liq ekrandan chiqish" : "To‘liq ekran"} title="To‘liq ekran">{fullscreen ? <Minimize /> : <Maximize />}<span>{fullscreen ? "Chiqish" : "To‘liq ekran"}</span></button>
+      {controlMessage && <p role="status">{controlMessage}</p>}
+    </nav>
   </div>
 }
