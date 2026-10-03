@@ -127,3 +127,11 @@ Environment files, deployment credentials, local archives and build outputs are
 excluded from Git. Local secrets and archives are also excluded from Vercel uploads.
 
 See [supabase/README.md](supabase/README.md) for backend status and migration notes.
+
+## HR scheduling
+
+In `/admin`, HR and Super Admin can use **+ Xodim qo‘shish** for the staff birthday roster, or **+ Oy qo‘shish** for monthly employees. Fill the date, name, photo and message, then **Saqlash → E’lon qilish**. Saved drafts do not change published content.
+
+Birthdays repeat annually on the selected day/month in Asia/Tashkent. Multiple birthdays each receive a slide; February 29 appears only in leap years. Monthly employees use a year/month, with one active published entry per month. No eligible entry means that slide is skipped. Disable an entry, save and publish to remove it from rotation without deleting it. Global slide toggles still apply.
+
+TVs fetch only current eligible records every 30 seconds and refresh at the Tashkent date boundary. HR does not need to keep their computer open. Future entries and the full roster remain private. Existing monthly content retains its original month; the legacy birthday is preserved as a draft until HR supplies its actual date.

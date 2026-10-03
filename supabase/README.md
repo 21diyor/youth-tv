@@ -88,3 +88,11 @@ The Auth settings endpoint currently reports `disable_signup=false`; the earlier
 setup notes claiming signups were disabled were stale. New accounts receive no
 application role and cannot access content. Disable new signups in the Supabase
 Auth settings if this deployment should remain invitation-only.
+
+### Scheduled HR content (2026-10-03)
+
+Local migration `20261003050630_scheduled_hr_content.sql` is applied remotely as `20261003050825`. `hr_plans` is private to HR and Super Admin, with separate draft/published payloads. Authenticated clients can write only draft columns; publishing uses the role-checked `publish_hr_plan` RPC. A unique partial index enforces one enabled published employee per month.
+
+`current_hr_slides()` intentionally allows anonymous execution as SECURITY DEFINER with an empty search path. It accepts no date parameter and returns only enabled published content for the current Asia/Tashkent date, omitting birthday dates. Supabase's anonymous-definer advisory is expected for this narrowly scoped public TV endpoint ([advisor explanation](https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable)). Scheduled media is readable anonymously only when currently eligible. Future records and drafts are not available through the public RPC.
+
+Verified with rollback-only SQL fixtures: multiple same-day birthdays, exclusion of other dates and future monthly entries, leap-day validation, duplicate-month rejection, draft/publish separation, HR access, appeals-role denial, and anonymous privacy. HR draft creation was also verified through the browser, then the test-only draft was removed.

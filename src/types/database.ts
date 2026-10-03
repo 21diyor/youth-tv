@@ -167,6 +167,33 @@ export type Database = {
         }
         Relationships: []
       }
+      hr_plans: {
+        Row: {
+          draft: Json
+          id: string
+          kind: string
+          published: Json | null
+          published_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          draft: Json
+          id?: string
+          kind: string
+          published?: Json | null
+          published_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          draft?: Json
+          id?: string
+          kind?: string
+          published?: Json | null
+          published_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       managers_content: {
         Row: {
           payload: Json
@@ -322,6 +349,7 @@ export type Database = {
       can_manage_appeals: { Args: never; Returns: boolean }
       can_manage_hr: { Args: never; Returns: boolean }
       can_manage_press: { Args: never; Returns: boolean }
+      current_hr_slides: { Args: never; Returns: Json }
       has_any_role: { Args: never; Returns: boolean }
       has_role: {
         Args: { _role: Database["public"]["Enums"]["app_role"] }
@@ -388,6 +416,23 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "employee_content"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      publish_hr_plan: {
+        Args: { plan_id: string }
+        Returns: {
+          draft: Json
+          id: string
+          kind: string
+          published: Json | null
+          published_at: string | null
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "hr_plans"
           isOneToOne: true
           isSetofReturn: false
         }
@@ -473,6 +518,10 @@ export type Database = {
       }
       valid_department_content: {
         Args: { kind: string; value: Json }
+        Returns: boolean
+      }
+      valid_hr_plan: {
+        Args: { complete?: boolean; kind: string; p: Json }
         Returns: boolean
       }
     }

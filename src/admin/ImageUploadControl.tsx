@@ -17,10 +17,12 @@ export function ImageUploadControl({
   upload,
   onUploaded,
   hasPendingImage,
+  onUploadingChange,
 }: {
   upload: (file: File) => Promise<string>
   onUploaded: (path: string) => void
   /** Form holds an uploaded image that is not yet saved to the draft. */
+  onUploadingChange?: (uploading: boolean) => void
   hasPendingImage: boolean
 }) {
   const inputRef = useRef<HTMLInputElement>(null)
@@ -44,6 +46,7 @@ export function ImageUploadControl({
     }
 
     setUploading(true)
+    onUploadingChange?.(true)
     setError(null)
 
     try {
@@ -56,6 +59,7 @@ export function ImageUploadControl({
       )
     } finally {
       setUploading(false)
+      onUploadingChange?.(false)
     }
   }
 

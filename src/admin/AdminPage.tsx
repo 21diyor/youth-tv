@@ -1,9 +1,9 @@
 import { OverviewContent } from "@/admin/OverviewContent"
 import { loginDisplayName } from "@/auth/loginIdentifier"
-import { ScheduleEditor, ManagersEditor, BirthdayEditor } from "@/admin/DepartmentEditors"
+import { ScheduleEditor, ManagersEditor } from "@/admin/DepartmentEditors"
+import { ScheduledHrEditor } from "@/admin/ScheduledHrEditor"
 import { useState } from "react"
 import { PresidentEditor } from "@/admin/PresidentEditor"
-import { EmployeeEditor } from "@/admin/EmployeeEditor"
 import { AppealsEditor } from "@/admin/AppealsEditor"
 import { SlideSettingsEditor } from "@/admin/SlideSettingsEditor"
 
@@ -36,7 +36,7 @@ const menuItems: {
   title: string
   description: string
 }[] = [
-  { id: "managers", title: "Rahbarlar murojaatlari", description: "Murojaatlar bo‘limi" },
+  { id: "managers", title: "Rahbariyat shaxsiy qabullari", description: "Murojaatlar bo‘limi" },
   { id: "schedule", title: "Rahbariyat qabul jadvali", description: "HR bo‘limi" },
   { id: "birthday", title: "Tug‘ilgan kun tabrigi", description: "HR bo‘limi" },
   {
@@ -223,7 +223,7 @@ export function AdminPage() {
               )}
               {showSection("schedule") && <ScheduleEditor />}
               {showSection("managers") && <ManagersEditor />}
-              {showSection("birthday") && <BirthdayEditor />}
+              {showSection("birthday") && <ScheduledHrEditor key="birthday" kind="birthday" />}
 
               {showSection("president") && (
                 <PresidentEditor />
@@ -234,7 +234,7 @@ export function AdminPage() {
                 )}
 
               {showSection("employee") && (
-                <EmployeeEditor />
+                <ScheduledHrEditor key="employee" kind="employee" />
                 )}
 
               {showSection("settings") && (

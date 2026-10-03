@@ -31,7 +31,7 @@ export function ScheduleEditor() {
     {!valid && <p role="alert" className="text-sm text-red-700">Jadvalni yoqish uchun barcha maydonlarni to‘ldiring.</p>}
     {draft.entries.map((row, i) => <section key={i} className={panel}><h4 className="font-semibold">Rahbar {i + 1}</h4><div className="grid grid-cols-2 gap-5">
       {([["name", "Ism familiya"], ["title", "Lavozimi"], ["day", "Qabul kuni (masalan, Dushanba)"], ["time", "Qabul vaqti (masalan, 10:00–12:00)"], ["location", "Qabul manzili"]] as const).map(([key, label]) => <Field key={key} label={label} value={row[key]} onChange={value => setDraft({ ...draft, entries: draft.entries.map((entry, index) => index === i ? { ...entry, [key]: value } : entry) })} />)}
-    </div><PortraitUpload path={row.photoPath} initialPath={initial.entries[i].photoPath} upload={uploadSchedulePortrait} onUploaded={photoPath => setDraft({ ...draft, entries: draft.entries.map((entry,index) => index === i ? { ...entry, photoPath } : entry) })} hint="Ushbu rasm rahbarning murojaatlar slaydida ham ishlatiladi, agar u yerda alohida rasm tanlanmagan bo‘lsa." /></section>)}
+    </div><PortraitUpload path={row.photoPath} initialPath={initial.entries[i].photoPath} upload={uploadSchedulePortrait} onUploaded={photoPath => setDraft({ ...draft, entries: draft.entries.map((entry,index) => index === i ? { ...entry, photoPath } : entry) })} hint="Ushbu rasm rahbarning shaxsiy qabullar slaydida ham ishlatiladi, agar u yerda alohida rasm tanlanmagan bo‘lsa." /></section>)}
   </EditorFrame>
 }
 
@@ -44,7 +44,7 @@ export function ManagersEditor() {
     && row.total === row.resolved + row.inProgress + row.overdue
     && (!row.enabled || (row.name.trim() && row.title.trim())))
   const actions = useDraftPublish("managers", draft, !!valid)
-  return <EditorFrame title="Rahbarlar murojaatlari" actions={<DraftPublishActions state={actions} />}>
+  return <EditorFrame title="Rahbariyat shaxsiy qabullari" actions={<DraftPublishActions state={actions} />}>
     <p className="text-sm text-slate-600">Har bir rahbar alohida slaydda ko‘rsatiladi. Haqiqiy raqamlarni kiriting va tegishli slaydni yoqing.</p>
     {!valid && <p role="alert" className="text-sm text-red-700">Jami = hal etilgan + jarayonda + muddati o‘tgan. Sonlar manfiy bo‘lmasligi, faol slaydda ism va lavozim bo‘lishi kerak.</p>}
     {draft.managers.map((row, i) => {

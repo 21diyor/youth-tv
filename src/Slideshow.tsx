@@ -5,11 +5,13 @@ import { PresidentQuoteSlide } from "@/slides/PresidentQuoteSlide"
 import { BirthdaySlide, ManagementScheduleSlide, ManagerAppealsSlide } from "@/slides/DepartmentSlides"
 import { usePublishedContent } from "@/hooks/usePublishedContent"
 import { useTvTheme } from "@/hooks/useTvTheme"
+import { useCurrentHrSlides } from "@/data/hrPlans"
 import { ChevronLeft, ChevronRight, Pause, Play, Maximize, Minimize } from "lucide-react"
 
 const TRANSITION_MS = 450
 
 export function Slideshow() {
+  const hr = useCurrentHrSlides()
   const settings = usePublishedContent("settings")
   const schedule = usePublishedContent("schedule")
   const managers = usePublishedContent("managers")
@@ -18,8 +20,8 @@ export function Slideshow() {
     { id: "appeals", enabled: settings.appealsEnabled, element: <CitizenAppealsSlide /> },
     { id: "schedule", enabled: schedule.enabled, element: <ManagementScheduleSlide /> },
     ...managers.managers.map((manager, index) => ({ id: `manager-${index}`, enabled: manager.enabled, element: <ManagerAppealsSlide index={index} /> })),
-    { id: "birthday", enabled: birthday.enabled, element: <BirthdaySlide /> },
-    { id: "employee", enabled: settings.employeeEnabled, element: <EmployeeOfMonthSlide /> },
+    ...(hr?.birthdays ?? []).map(person => ({id:`birthday-${person.id}`, enabled:birthday.enabled, element:<BirthdaySlide content={person} />})),
+    ...(hr?.employee ? [{id:`employee-${hr.employee.id}`,enabled:settings.employeeEnabled,element:<EmployeeOfMonthSlide content={hr.employee}/>}]:[]),
     { id: "president", enabled: settings.presidentEnabled, element: <PresidentQuoteSlide /> },
   ].filter(slide => slide.enabled)
   const ids = slides.map(slide => slide.id).join(",")

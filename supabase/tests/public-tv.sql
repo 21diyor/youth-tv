@@ -17,7 +17,8 @@ begin
     end if;
   end loop;
   if has_table_privilege('anon','public.user_roles','SELECT')
-    or has_table_privilege('anon','public.audit_log','SELECT') then
+    or has_table_privilege('anon','public.audit_log','SELECT')
+    or has_table_privilege('anon','public.hr_plans','SELECT') then
     raise exception 'Private administration data is exposed';
   end if;
   if exists (
@@ -27,6 +28,8 @@ begin
       and not exists (select 1 from public.birthday_content b where b.status='published' and b.payload->>'photoPath'=o.name)
       and not exists (select 1 from public.schedule_content s,jsonb_array_elements(s.payload->'entries') e where s.status='published' and e->>'photoPath'=o.name)
       and not exists (select 1 from public.managers_content m,jsonb_array_elements(m.payload->'managers') e where m.status='published' and e->>'photoPath'=o.name)
+      and o.name is distinct from (public.current_hr_slides()->'employee'->>'photoPath')
+      and not exists(select 1 from jsonb_array_elements(public.current_hr_slides()->'birthdays') b where b->>'photoPath'=o.name)
   ) then raise exception 'Unpublished media is exposed'; end if;
 end $test$;
 rollback;

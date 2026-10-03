@@ -4,6 +4,7 @@ import { AppealStats } from "./AppealStats"
 import { Portrait } from "./Portrait"
 import { PremiumPopper } from "./Celebration"
 import { TvFrame } from "./TvFrame"
+import type { HrSlide } from "@/data/hrPlans"
 
 // Omit the repeated agency name on TV; preserve the saved title.
 function shortTitle(title: string) {
@@ -31,7 +32,7 @@ export function ManagerAppealsSlide({ index }: { index: number }) {
   const content = usePublishedContent("managers").managers[index]
   const schedule = usePublishedContent("schedule")
   if (!content) return null
-  return <TvFrame title="Rahbariyat murojaatlari">
+  return <TvFrame title="Rahbariyat shaxsiy qabullari">
     <div className="tv-person-grid">
       <Portrait path={content.photoPath || schedule.entries[index]?.photoPath} name={content.name} className="tv-person-portrait" />
       <div className="tv-person-copy">
@@ -42,8 +43,7 @@ export function ManagerAppealsSlide({ index }: { index: number }) {
     </div>
   </TvFrame>
 }
-export function BirthdaySlide() {
-  const content = usePublishedContent("birthday")
+export function BirthdaySlide({ content }: { content: HrSlide }) {
   return <TvFrame title="Bugungi tabrik" celebration>
     <div className="tv-person-grid birthday-card">
       <Portrait path={content.photoPath} name={content.name} className="tv-person-portrait" />

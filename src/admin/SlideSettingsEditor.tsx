@@ -1,9 +1,11 @@
+import { useCurrentHrSlides } from "@/data/hrPlans"
 import { useState } from "react"
 import { usePublishedContent } from "@/hooks/usePublishedContent"
 import { getDraft, getSaveErrorMessage, saveDraft, publish, setSlideVisibility } from "@/data/tvStore"
 import type { TvContentKey } from "@/data/tvTypes"
 
 export function SlideSettingsEditor() {
+  const hr = useCurrentHrSlides()
   const settings = usePublishedContent("settings")
   const schedule = usePublishedContent("schedule")
   const managers = usePublishedContent("managers")
@@ -17,12 +19,13 @@ export function SlideSettingsEditor() {
   const slides: { id: string; key: Exclude<TvContentKey, "settings">; index?: number; title: string; detail: string; enabled: boolean }[] = [
     { id: "appeals", key: "appeals", title: "Fuqarolar murojaatlari", detail: "Umumiy statistika", enabled: settings.appealsEnabled },
     { id: "schedule", key: "schedule", title: "Rahbariyat qabul jadvali", detail: "Rahbarlar kartochkalari va qabul vaqti", enabled: schedule.enabled },
-    ...managers.managers.map((manager, index) => ({ id: `manager-${index}`, key: "managers" as const, index, title: manager.name || `Rahbar ${index + 1}`, detail: "Rahbar murojaatlari", enabled: manager.enabled })),
-    { id: "birthday", key: "birthday", title: "Tug‘ilgan kun tabrigi", detail: birthday.name || "Xodim tabrigi", enabled: birthday.enabled },
-    { id: "employee", key: "employee", title: "Oy xodimi", detail: "Xodim ma’lumotlari va asosiy natijalar", enabled: settings.employeeEnabled },
+    ...managers.managers.map((manager, index) => ({ id: `manager-${index}`, key: "managers" as const, index, title: manager.name || `Rahbar ${index + 1}`, detail: "Rahbariyat shaxsiy qabullari", enabled: manager.enabled })),
+    { id: "birthday", key: "birthday", title: "Tug‘ilgan kun tabrigi", detail: `Bugun: ${hr?.birthdays.length ?? 0} tabrik. Sana bo‘yicha avtomatik.`, enabled: birthday.enabled },
+    { id: "employee", key: "employee", title: "Oy xodimi", detail: hr?.employee?.name || "Joriy oy uchun e’lon yo‘q", enabled: settings.employeeEnabled },
     { id: "president", key: "president", title: "Prezident fikri", detail: "Iqtibos va portret", enabled: settings.presidentEnabled },
   ]
   const count = slides.filter(slide => slide.enabled).length
+  const playing = slides.filter(s => s.enabled && s.id !== "birthday" && s.id !== "employee").length + (birthday.enabled ? hr?.birthdays.length ?? 0 : 0) + (settings.employeeEnabled && hr?.employee ? 1 : 0)
 
   const changeVisibility = async (slide: typeof slides[number]) => {
     if (busy) return
@@ -70,6 +73,6 @@ export function SlideSettingsEditor() {
         </button>
       </div>)}
     </section>
-    <p className="mt-5 text-sm text-slate-500">{count ? `To‘liq sikl: taxminan ${Math.round((settings.intervalSeconds + .45) * count)} soniya.` : "Barcha slaydlar o‘chirilgan. TV ekranida faol slayd yo‘qligi ko‘rsatiladi."}</p>
+    <p className="mt-5 text-sm text-slate-500">{playing ? `To‘liq sikl: taxminan ${Math.round((settings.intervalSeconds + .45) * playing)} soniya.` : "Barcha slaydlar o‘chirilgan. TV ekranida faol slayd yo‘qligi ko‘rsatiladi."}</p>
   </div>
 }

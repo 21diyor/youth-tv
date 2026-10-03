@@ -1,9 +1,8 @@
-import { usePublishedContent } from "@/hooks/usePublishedContent"
+import type { HrSlide } from "@/data/hrPlans"
 import { useTashkentDate } from "@/hooks/useTashkentDate"
 import { Portrait } from "./Portrait"
 import { TvFrame } from "./TvFrame"
-export function EmployeeOfMonthSlide() {
-  const content = usePublishedContent("employee")
+export function EmployeeOfMonthSlide({content}: {content:HrSlide}) {
   const calendar = useTashkentDate()
   return <TvFrame title="Oy xodimi">
     <div className="tv-person-grid">

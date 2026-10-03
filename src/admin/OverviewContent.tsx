@@ -1,3 +1,4 @@
+import { useCurrentHrSlides } from "@/data/hrPlans"
 import { useEffect, useReducer } from "react"
 import { useTashkentDate } from "@/hooks/useTashkentDate"
 import { tashkentDate } from "@/lib/tashkentTime"
@@ -18,6 +19,7 @@ const timeFormat = new Intl.DateTimeFormat("en-GB", {
 
 export function OverviewContent() {
   const calendar = useTashkentDate()
+  const hr = useCurrentHrSlides()
   const [, refresh] = useReducer((value: number) => value + 1, 0)
   useEffect(() => {
     const cleanup = keys.map((key) => subscribe(key, refresh))
@@ -30,8 +32,8 @@ export function OverviewContent() {
     { key: "appeals", title: "Fuqarolar murojaatlari", detail: "Statistika va analitika", enabled: settings.appealsEnabled },
     { key: "schedule", title: "Rahbariyat qabul jadvali", detail: "HR bo‘limi", enabled: getPublished("schedule").enabled },
     ...getPublished("managers").managers.map((manager, i) => ({ key: `manager-${i}`, title: manager.name || `Rahbar ${i + 1}`, detail: "Murojaatlar bo‘limi", enabled: manager.enabled })),
-    { key: "birthday", title: "Tug‘ilgan kun tabrigi", detail: "HR bo‘limi", enabled: getPublished("birthday").enabled },
-    { key: "employee", title: "Oy xodimi", detail: `${calendar.month} ${calendar.year}`, enabled: settings.employeeEnabled },
+    ...(hr?.birthdays ?? []).map(person => ({ key: `birthday-${person.id}`, title: "Tug‘ilgan kun tabrigi", detail: person.name, enabled: getPublished("birthday").enabled })),
+    { key: "employee", title: "Oy xodimi", detail: `${calendar.month} ${calendar.year}`, enabled: settings.employeeEnabled && !!hr?.employee },
     { key: "president", title: "Prezident fikri", detail: president.sourceDate, enabled: settings.presidentEnabled },
   ] as const
   const publishedDates = keys.map((key) => getContentMeta(key).publishedAt)
