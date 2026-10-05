@@ -63,7 +63,7 @@ export function SlideSettingsEditor() {
     <section className="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-white">
       <header className="flex items-center justify-between border-b border-slate-200 p-6">
         <div><h4 className="font-semibold">Barcha slaydlar</h4><p className="mt-2 text-xs text-slate-500">Tugmalar darhol qo‘llanadi. Faqat ko‘rinish o‘zgaradi; boshqa qoralamalar e’lon qilinmaydi.</p></div>
-        <span className="ml-5 shrink-0 text-sm font-semibold text-blue-700">{count} / {slides.length} faol</span>
+        <span className="ml-5 shrink-0 text-sm font-semibold text-blue-700">{count} / {slides.length} yoqilgan · Bugun {playing} slayd</span>
       </header>
       {slides.map((slide, i) => <div key={slide.id} className="grid grid-cols-[46px_1fr_auto] items-center gap-4 border-b border-slate-100 px-6 py-5 last:border-b-0">
         <span className="text-xs font-semibold text-slate-400">{String(i + 1).padStart(2, "0")}</span>

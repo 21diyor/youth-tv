@@ -38,7 +38,7 @@ const menuItems: {
 }[] = [
   { id: "managers", title: "Rahbariyat shaxsiy qabullari", description: "Murojaatlar bo‘limi" },
   { id: "schedule", title: "Rahbariyat qabul jadvali", description: "HR bo‘limi" },
-  { id: "birthday", title: "Tug‘ilgan kun tabrigi", description: "HR bo‘limi" },
+  { id: "birthday", title: "Xodimlar va tug‘ilgan kunlar", description: "HR bo‘limi" },
   {
     id: "overview",
     title: "Umumiy ko‘rinish",

@@ -4,7 +4,7 @@ import { useTashkentDate } from "@/hooks/useTashkentDate"
 import type { Json } from "@/types/database"
 
 export type HrPayload = {
-  enabled: boolean; name: string; department: string; position: string;
+  staffId?: string; enabled: boolean; name: string; department: string; position: string;
   message: string; recognition: string; photoPath: string | null; dateKey: string
 }
 export type HrPlan = { id: string; kind: "birthday" | "employee"; draft: HrPayload; published: HrPayload | null; published_at: string | null }

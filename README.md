@@ -135,3 +135,9 @@ In `/admin`, HR and Super Admin can use **+ Xodim qo‘shish** for the staff bir
 Birthdays repeat annually on the selected day/month in Asia/Tashkent. Multiple birthdays each receive a slide; February 29 appears only in leap years. Monthly employees use a year/month, with one active published entry per month. No eligible entry means that slide is skipped. Disable an entry, save and publish to remove it from rotation without deleting it. Global slide toggles still apply.
 
 TVs fetch only current eligible records every 30 seconds and refresh at the Tashkent date boundary. HR does not need to keep their computer open. Future entries and the full roster remain private. Existing monthly content retains its original month; the legacy birthday is preserved as a draft until HR supplies its actual date.
+
+### Shared staff directory
+
+HR enters each person once under **Xodimlar va tug‘ilgan kunlar**: name, position, department, photo, birthday and greeting. Saving a complete profile with automatic greetings enabled activates its annual birthday slide; no separate publish step is needed. Incomplete entries can remain drafts.
+
+For **Oy xodimi**, choose **+ Oy qo‘shish**, select the year/month (including future months), choose a staff member, and enter the reason. Save and publish the monthly plan. The person's profile and photo are reused, and the server validates the selected staff record at publication. Published monthly awards keep a snapshot of that profile; publishing again refreshes it from the directory. One current-month award appears, and future awards remain private until their month starts. Existing records have been preserved and the previous monthly employee imported into the directory without inventing a birthday.
