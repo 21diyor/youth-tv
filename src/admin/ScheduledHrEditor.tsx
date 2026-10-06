@@ -57,19 +57,12 @@ export function ScheduledHrEditor({mode,onOpenStaff}:{mode:"staff"|"birthday"|"e
    } else setMessage(mode==="staff"?"Xodim saqlandi. Avtomatik tabrik uchun tug‘ilgan sana va rasmni to‘ldiring.":"Qoralama saqlandi. Tayyor bo‘lganda e’lon qiling.")
   } catch(err) {
    const code=(err as {code?:string}).code
-   setError(code==="23505"?"Bu oy uchun boshqa xodim e’lon qilingan. O‘sha oy rejasini tahrirlang yoki avval uning faol belgisini o‘chiring va e’lon qiling.":"Saqlab bo‘lmadi. Sana, xodim va majburiy maydonlarni tekshiring.")
+   setError(code==="23505"?"Bu xodim shu oy uchun allaqachon e’lon qilingan. Uning mavjud yozuvini tahrirlang.":"Saqlab bo‘lmadi. Sana, xodim va majburiy maydonlarni tekshiring.")
   } finally {setBusy(false)}
  }
  const currentMonth=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Tashkent",year:"numeric",month:"2-digit"}).formatToParts(new Date())
  const monthKey=currentMonth.find(p=>p.type==="year")?.value+"-"+currentMonth.find(p=>p.type==="month")?.value
- const nextMonth=()=>{
-  const [y,m]=monthKey.split("-").map(Number)
-  for(let offset=0;offset<120;offset++){
-   const d=new Date(Date.UTC(y,m-1+offset,1)),key=d.getUTCFullYear()+"-"+String(d.getUTCMonth()+1).padStart(2,"0")
-   if(!records.some(r=>r.draft.dateKey===key||r.published?.enabled&&r.published.dateKey===key))return key
-  }
-  return monthKey
- }
+ const nextMonth=()=>selected?.draft.dateKey||monthKey
  const rowStatus=(row:HrPlan)=>kind==="birthday"?(row.published?.enabled?"Avtomatik tabrik yoqilgan":"Tabrik yoqilmagan"):
   !row.published?.enabled?"Qoralama":row.published.dateKey===monthKey?"TV: joriy oy":row.published.dateKey>monthKey?"Kelgusi oyga e’lon qilingan":"Oldingi oy"
  const displayedName=(row:HrPlan)=>kind==="employee"?staff.find(p=>p.id===row.draft.staffId)?.draft.name||row.draft.name:row.draft.name
@@ -78,8 +71,8 @@ export function ScheduledHrEditor({mode,onOpenStaff}:{mode:"staff"|"birthday"|"e
   !payload.position&&kind==="employee"?"Xodimlar bo‘limida lavozimni kiriting.":kind==="employee"&&!payload.recognition.trim()?"E’tirof sababini kiriting.":"Ma’lumotlarni to‘ldiring."
  if(loading)return <p role="status">Yuklanmoqda…</p>
  return <div>
- <header className="mb-7 flex flex-wrap items-start justify-between gap-5"><div><p className="mb-2 text-xs font-semibold uppercase tracking-widest text-blue-700">HR bo‘limi</p><h3 className="text-3xl font-semibold">{mode==="staff"?"Xodimlar":mode==="birthday"?"Tug‘ilgan kunlar":"Oy xodimi"}</h3><p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-500">{mode==="staff"?"Ism, lavozim, bo‘lim, tug‘ilgan sana va rasm — bir joyda. Saqlangan ma’lumot oy xodimi va tabriklarda avtomatik ishlatiladi.":mode==="birthday"?"Xodimni tanlang, tabrik matnini yozing va avtomatik tabrikni yoqing. Tabrik har yili tug‘ilgan kuni Toshkent vaqti bilan chiqadi.":"Xodimni ro‘yxatdan tanlang, oy va e’tirof sababini belgilang. Har bir oy uchun bitta e’lon. Kelgusi oylarni oldindan tayyorlang."}</p></div>
- {mode!=="birthday"?<button disabled={busy} onClick={()=>choose(null)} className="flex items-center gap-2 rounded-lg bg-blue-700 px-5 py-3 font-semibold text-white"><Plus size={20}/>{mode==="staff"?"Xodim qo‘shish":"Oy qo‘shish"}</button>:<button onClick={onOpenStaff} className="rounded-lg border px-4 py-3">Xodimlar ro‘yxatini ochish</button>}</header>
+ <header className="mb-7 flex flex-wrap items-start justify-between gap-5"><div><p className="mb-2 text-xs font-semibold uppercase tracking-widest text-blue-700">HR bo‘limi</p><h3 className="text-3xl font-semibold">{mode==="staff"?"Xodimlar":mode==="birthday"?"Tug‘ilgan kunlar":"Oy xodimlari"}</h3><p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-500">{mode==="staff"?"Ism, lavozim, bo‘lim, tug‘ilgan sana va rasm — bir joyda. Saqlangan ma’lumot oy xodimi va tabriklarda avtomatik ishlatiladi.":mode==="birthday"?"Xodimni tanlang, tabrik matnini yozing va avtomatik tabrikni yoqing. Tabrik har yili tug‘ilgan kuni Toshkent vaqti bilan chiqadi.":"Xodimni ro‘yxatdan tanlang, oy va e’tirof sababini belgilang. Bir oyga bir nechta xodim qo‘shing. TV avval umumiy, keyin har bir xodim slaydini ko‘rsatadi. Kelgusi oylarni oldindan tayyorlang."}</p></div>
+ {mode!=="birthday"?<button disabled={busy} onClick={()=>choose(null)} className="flex items-center gap-2 rounded-lg bg-blue-700 px-5 py-3 font-semibold text-white"><Plus size={20}/>{mode==="staff"?"Xodim qo‘shish":"Oyga xodim qo‘shish"}</button>:<button onClick={onOpenStaff} className="rounded-lg border px-4 py-3">Xodimlar ro‘yxatini ochish</button>}</header>
  <div role="status" className="mb-4 text-sm"><span className="text-red-700">{error}</span><span className="text-emerald-700">{message}</span></div>
  <div className="grid grid-cols-1 gap-6 xl:grid-cols-[280px_minmax(0,1fr)]">
  <aside><input aria-label="Xodim qidirish" className={inputClass+" mb-4"} placeholder="Ism yoki oy bo‘yicha qidirish…" value={search} onChange={e=>setSearch(e.target.value)}/>

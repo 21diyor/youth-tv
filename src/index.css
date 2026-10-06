@@ -295,3 +295,9 @@
 /* Let the decorative fabric cross the canvas letterbox margin to the viewport. */
 .tv-canvas main.tv-frame { overflow: visible; }
 .tv-frame .schedule-flag { right: calc(-95px - var(--tv-side-margin, 0px)); width: calc(700px + var(--tv-side-margin, 0px)); object-fit: fill; }
+.tv-group-caption { display:flex; justify-content:space-between; color:var(--tv-muted); font-size:30px; margin-bottom:24px; }
+.tv-hr-group { display:grid; justify-content:center; gap:28px; flex:1; min-height:0; }
+.tv-hr-group-card { display:flex; flex-direction:column; min-height:0; gap:18px; padding:18px; border:1px solid var(--tv-border); border-radius:32px; background:var(--tv-panel); }
+.tv-hr-group-card .tv-portrait { flex:1; min-height:0; }
+.tv-hr-group-card h2 { font-size:32px; line-height:1.18; text-align:center; font-weight:700; }
+.tv-hr-group-many .tv-hr-group-card h2 { font-size:28px; }

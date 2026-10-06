@@ -60,7 +60,7 @@ const menuItems: {
   },
   {
     id: "employee",
-    title: "Oy xodimi",
+    title: "Oy xodimlari",
     description: "Xodim ma’lumotlari",
   },
   {

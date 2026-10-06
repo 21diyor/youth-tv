@@ -1,3 +1,4 @@
+import { HrGroupSlide } from "@/slides/HrGroupSlide"
 import { useCallback, useEffect, useState, type ReactNode } from "react"
 import { CitizenAppealsSlide } from "@/slides/CitizenAppealsSlide"
 import { EmployeeOfMonthSlide } from "@/slides/EmployeeOfMonthSlide"
@@ -19,8 +20,9 @@ export function Slideshow() {
     else if(slot.id==="schedule")element=<ManagementScheduleSlide/>
     else if(slot.id==="president")element=<PresidentQuoteSlide/>
     else if(slot.id.startsWith("manager-"))element=<ManagerAppealsSlide index={Number(slot.id.split("-")[1])}/>
+    else if(slot.id.includes('-group-')){const birthday=slot.id.startsWith('birthday');element=<HrGroupSlide birthday={birthday} people={birthday?state.hr.birthdays:state.hr.employees} page={Number(slot.id.split('-').at(-1))}/>}
     else if(slot.id.startsWith("birthday-")){const person=state.hr.birthdays.find(p=>"birthday-"+p.id===slot.id);if(person)element=<BirthdaySlide content={person}/>}
-    else if(slot.id.startsWith("employee-")&&state.hr.employee)element=<EmployeeOfMonthSlide content={state.hr.employee}/>
+    else if(slot.id.startsWith("employee-")){const person=state.hr.employees.find(p=>"employee-"+p.id===slot.id);if(person)element=<EmployeeOfMonthSlide content={person}/>}
     return {...slot,element}
   })
   return <Playback slides={slides} state={state} offline={offline}/>

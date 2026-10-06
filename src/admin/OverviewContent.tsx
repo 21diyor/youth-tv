@@ -32,8 +32,10 @@ export function OverviewContent() {
     { key: "appeals", title: "Fuqarolar murojaatlari", detail: "Statistika va analitika", enabled: settings.appealsEnabled },
     { key: "schedule", title: "Rahbariyat qabul jadvali", detail: "HR bo‘limi", enabled: getPublished("schedule").enabled },
     ...getPublished("managers").managers.map((manager, i) => ({ key: `manager-${i}`, title: manager.name || `Rahbar ${i + 1}`, detail: "Murojaatlar bo‘limi", enabled: manager.enabled })),
+    ...(hr?.birthdays.length?[{key:"birthday-group",title:"Bugungi tavallud ayyomlari",detail:`${hr.birthdays.length} xodim`,enabled:getPublished("birthday").enabled}]:[]),
     ...(hr?.birthdays ?? []).map(person => ({ key: `birthday-${person.id}`, title: "Tug‘ilgan kun tabrigi", detail: person.name, enabled: getPublished("birthday").enabled })),
-    { key: "employee", title: "Oy xodimi", detail: `${calendar.month} ${calendar.year}`, enabled: settings.employeeEnabled && !!hr?.employee },
+    ...(hr?.employees.length?[{key:"employee-group",title:"Oy xodimlari",detail:`${calendar.month} ${calendar.year}`,enabled:settings.employeeEnabled}]:[]),
+    ...(hr?.employees??[]).map(person=>({key:`employee-${person.id}`,title:"Oy xodimi",detail:person.name,enabled:settings.employeeEnabled})),
     { key: "president", title: "Prezident fikri", detail: president.sourceDate, enabled: settings.presidentEnabled },
   ] as const
   const publishedDates = keys.map((key) => getContentMeta(key).publishedAt)

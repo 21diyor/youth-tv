@@ -9,7 +9,7 @@ export type HrPayload = {
 }
 export type HrPlan = { id: string; kind: "birthday" | "employee"; draft: HrPayload; published: HrPayload | null; published_at: string | null }
 export type HrSlide = Omit<HrPayload, "dateKey"> & {id: string}
-export type CurrentHrSlides = {date: string; birthdays: HrSlide[]; employee: HrSlide | null}
+export type CurrentHrSlides = {date: string; birthdays: HrSlide[]; employees: HrSlide[]; employee: HrSlide | null}
 export function emptyHrPayload(): HrPayload {
   return {enabled:true,name:"",department:"",position:"",message:"Tug‘ilgan kuningiz muborak! Sizga sog‘liq, baxt va muvaffaqiyat tilaymiz!",recognition:"",photoPath:null,dateKey:""}
 }

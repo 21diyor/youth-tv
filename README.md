@@ -142,7 +142,7 @@ Apply `20261005124035_private_director_dashboard.sql` before deploying the front
 
 HR and Super Admin maintain profiles under **Xodimlar**: name, position, department, portrait and birthday. **Tug‘ilgan kunlar** separately manages greetings and whether annual birthday slides are enabled. Saving complete birthday settings activates the annual greeting in Asia/Tashkent; February 29 appears only in leap years.
 
-In **Oy xodimi**, choose **+ Oy qo‘shish**, select a month and staff member, and enter the recognition reason. **Saqlash va e’lon qilish** saves and publishes together. Future months can be prepared in advance; only the current month is shown. The next unused month is suggested automatically. Profiles and portraits come from the staff directory, including later saved changes, without republishing each monthly award. Legacy records without a unique staff match require selection from the directory.
+In **Oy xodimi**, choose **+ Oyga xodim qo‘shish**, select a month and staff member, and enter the recognition reason. **Saqlash va e’lon qilish** saves and publishes together. Future months can be prepared in advance; only the current month is shown. New entries reuse the selected month, so several staff can be added to it. Profiles and portraits come from the staff directory, including later saved changes, without republishing each monthly award. Legacy records without a unique staff match require selection from the directory.
 
 Only eligible published birthdays and monthly awards are returned to TVs. Future plans and the full staff directory remain private. Global slide toggles still apply.
 
@@ -153,3 +153,7 @@ All TVs obtain the same published playlist and server time through `tv_playback_
 Super Admin can set individual slide durations (5–300 seconds) under **Slayd sozlamalari**, then **Vaqtlarni e’lon qilish**. Blank values use the default duration; the birthday duration applies to each eligible birthday. Previous/next and pause affect only that screen; **Sinxron efirga qaytish** immediately rejoins the shared timeline. An already-running screen retains its last playlist and clock during a network interruption and resynchronizes on reconnection.
 
 Apply `20261006102938_staff_profiles_and_synced_playback.sql` before deploying this frontend. `supabase/tests/synced-playback.sql` checks live profile projection, private/future data exclusion, duration validation and anonymous permissions using rolled-back fixtures. `node --test scripts/playback-timeline.test.mjs` verifies timing boundaries and independently started screens.
+
+## Group celebrations
+
+Monthly awards support multiple distinct staff per month. Each entry keeps its own recognition reason. TVs show **Oy xodimlari**, followed by each employee poster. Birthdays follow the same sequence for today’s staff. Overview pages contain up to six people to keep names readable, with no fixed total staff limit. Separate group durations are available in Slayd sozlamalari; existing employee/birthday switches control the entire sequence. Apply `20261006162731_multiple_hr_awards.sql`; verify with the rollback-only `supabase/tests/multiple-hr-awards.sql`.

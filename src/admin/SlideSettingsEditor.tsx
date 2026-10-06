@@ -22,11 +22,11 @@ export function SlideSettingsEditor() {
     { id: "schedule", key: "schedule", title: "Rahbariyat qabul jadvali", detail: "Rahbarlar kartochkalari va qabul vaqti", enabled: schedule.enabled },
     ...managers.managers.map((manager, index) => ({ id: `manager-${index}`, key: "managers" as const, index, title: manager.name || `Rahbar ${index + 1}`, detail: "Rahbariyat shaxsiy qabullari", enabled: manager.enabled })),
     { id: "birthday", key: "birthday", title: "Tug‘ilgan kun tabrigi", detail: `Bugun: ${hr?.birthdays.length ?? 0} tabrik. Sana bo‘yicha avtomatik.`, enabled: birthday.enabled },
-    { id: "employee", key: "employee", title: "Oy xodimi", detail: hr?.employee?.name || "Joriy oy uchun e’lon yo‘q", enabled: settings.employeeEnabled },
+    { id: "employee", key: "employee", title: "Oy xodimlari", detail: `${hr?.employees.length??0} xodim · har biriga alohida slayd`, enabled: settings.employeeEnabled },
     { id: "president", key: "president", title: "Prezident fikri", detail: "Iqtibos va portret", enabled: settings.presidentEnabled },
   ]
   const count = slides.filter(slide => slide.enabled).length
-  const playing = slides.filter(s => s.enabled && s.id !== "birthday" && s.id !== "employee").length + (birthday.enabled ? hr?.birthdays.length ?? 0 : 0) + (settings.employeeEnabled && hr?.employee ? 1 : 0)
+  const playing = slides.filter(s => s.enabled && s.id !== "birthday" && s.id !== "employee").length + (birthday.enabled ? (hr?.birthdays.length??0)+Math.ceil((hr?.birthdays.length??0)/6) : 0) + (settings.employeeEnabled ? (hr?.employees.length??0)+Math.ceil((hr?.employees.length??0)/6) : 0)
 
   const changeVisibility = async (slide: typeof slides[number]) => {
     if (busy) return
@@ -75,7 +75,8 @@ export function SlideSettingsEditor() {
         </button>
       </div>)}
     </section>
+    <section className="mt-6 grid gap-4 sm:grid-cols-2">{["birthday","employee"].map(kind=><label key={kind} className="rounded-xl border p-5 text-sm">{kind==="birthday"?"Tug‘ilgan kunlar — umumiy slayd":"Oy xodimlari — umumiy slayd"}<input aria-label={kind+" group duration"} className="mt-2 block w-full rounded-lg border p-3" type="number" min={5} max={300} placeholder={durations[kind]||interval} value={durations[kind+"-group"]??""} onChange={e=>setDurations(d=>({...d,[kind+"-group"]:e.target.value}))}/><span className="mt-2 block text-slate-500">Har sahifada 6 tagacha xodim. Bo‘sh bo‘lsa, shaxsiy slayd vaqti qo‘llanadi.</span></label>)}</section>
     <p className="mt-5 text-sm text-slate-500">Vaqtlar 5–300 soniya. Tahrirdan keyin “Vaqtlarni e’lon qilish” tugmasini bosing. Pauza yoki qo‘lda almashtirish faqat o‘sha TVga ta’sir qiladi; “Sinxron efirga qaytish” uni umumiy jadvalga qaytaradi.</p>
-    <p className="mt-5 text-sm text-slate-500">{playing ? `To‘liq sikl: ${slides.filter(s=>s.enabled).reduce((sum,s)=>sum+(settings.durations?.[s.id]??settings.intervalSeconds)*(s.id==="birthday"?(hr?.birthdays.length??0):s.id==="employee"?(hr?.employee?1:0):1),0)} soniya.` : "Barcha slaydlar o‘chirilgan. TV ekranida faol slayd yo‘qligi ko‘rsatiladi."}</p>
+    <p className="mt-5 text-sm text-slate-500">{playing ? `To‘liq sikl: ${slides.filter(s=>s.enabled).reduce((sum,s)=>sum+(settings.durations?.[s.id]??settings.intervalSeconds)*(s.id==="birthday"?(hr?.birthdays.length??0):s.id==="employee"?(hr?.employees.length??0):1),0)+(birthday.enabled?Math.ceil((hr?.birthdays.length??0)/6)*(settings.durations?.["birthday-group"]??settings.durations?.birthday??settings.intervalSeconds):0)+(settings.employeeEnabled?Math.ceil((hr?.employees.length??0)/6)*(settings.durations?.["employee-group"]??settings.durations?.employee??settings.intervalSeconds):0)} soniya.` : "Barcha slaydlar o‘chirilgan. TV ekranida faol slayd yo‘qligi ko‘rsatiladi."}</p>
   </div>
 }
