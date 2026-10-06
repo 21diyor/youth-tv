@@ -37,3 +37,5 @@ supabase/.temp/
 *.zip
 .env*
 !.env.example
+
+.local-dashboard/

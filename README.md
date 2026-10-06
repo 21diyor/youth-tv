@@ -128,6 +128,16 @@ excluded from Git. Local secrets and archives are also excluded from Vercel uplo
 
 See [supabase/README.md](supabase/README.md) for backend status and migration notes.
 
+## Private director dashboard
+
+`/dashboard` has a separate Supabase Auth session and a single designated owner account. The username is `dashboard`; its password is provisioned in Auth and is never stored in source code. The owner can read published reports only. Anonymous visitors and department accounts cannot retrieve dashboard data. Super Admin manages the data through `/admin` → **Rahbar paneli ma’lumotlari**, but does not receive access to the director dashboard itself.
+
+The initial report contains 222 indicators in 26 sections from the supplied 1 June 2026 report. Eight views offer chart drilldowns, sorting, indicator search, scoped CSV downloads, source notes, and a report-date selector. Missing values remain missing; overlapping categories are not added together. Source discrepancies are retained and explained.
+
+Editors use **Saqlash** for drafts, then **E’lon qilish** to publish. The director page refreshes every minute. **Yangi hisobot** creates an empty report using the existing metric structure; fill its date, periods, values and source notes before publishing. Concurrent edits are version-checked. Future integrations can populate this same schema; no external integrations are enabled yet.
+
+Apply `20261005124035_private_director_dashboard.sql` before deploying the frontend. Provision the Auth owner and seed report privately through database administration; source documents and report values are intentionally excluded from Git and the public bundle. `dashboard_owner` deliberately has no client RLS policies. Its guarded SECURITY DEFINER RPCs are the only reader path. Run `supabase/tests/dashboard.sql` as the database owner on a provisioned project for rollback-only access/publication tests, and `node --test scripts/dashboard-model.test.mjs` for calculation tests.
+
 ## HR scheduling
 
 In `/admin`, HR and Super Admin can use **+ Xodim qo‘shish** for the staff birthday roster, or **+ Oy qo‘shish** for monthly employees. Fill the date, name, photo and message, then **Saqlash → E’lon qilish**. Saved drafts do not change published content.

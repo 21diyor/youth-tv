@@ -1,5 +1,6 @@
 /** Department usernames are aliases for real Supabase Auth identities. */
 const departmentEmails: Record<string, string> = {
+  dashboard: "dashboard@youth-tv.invalid",
   murojaatlar: "murojaatlar@youth-tv.invalid",
   hr2026: "hr2026@youth-tv.invalid",
 }

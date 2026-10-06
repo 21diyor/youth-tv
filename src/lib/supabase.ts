@@ -32,7 +32,7 @@ const privateStorageFetch: typeof fetch = (input, init) => {
         ? input.href
         : input.url
 
-  if (url.includes("/storage/v1/object/")) {
+  if (url.includes("/storage/v1/object/") || url.includes("dashboard")) {
     return fetch(input, { ...init, cache: "no-store" })
   }
 
@@ -76,14 +76,15 @@ export function getSupabase(): TvSupabaseClient {
     )
   }
 
-  const admin = window.location.pathname.startsWith("/admin")
+  const director = window.location.pathname.startsWith("/dashboard")
+  const admin = window.location.pathname.startsWith("/admin") || director
   client = createClient<Database>(url, publishableKey, {
     auth: {
       persistSession: admin,
       autoRefreshToken: admin,
       detectSessionInUrl: admin,
       // TV requests never inherit an old TV/admin login from this browser.
-      ...(admin ? {} : { storageKey: "youth-tv-public" }),
+      ...(director ? {storageKey: "youth-tv-director",storage: window.sessionStorage} : admin ? {} : { storageKey: "youth-tv-public" }),
     },
     global: {
       fetch: privateStorageFetch,

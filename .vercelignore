@@ -13,3 +13,5 @@ dist
 *.rar
 .git
 supabase/.temp
+
+.local-dashboard/

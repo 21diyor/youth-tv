@@ -1,3 +1,5 @@
+import { lazy, Suspense } from "react"
+const DashboardEditor = lazy(() => import("@/dashboard/DashboardEditor").then(m=>({default:m.DashboardEditor})))
 import { OverviewContent } from "@/admin/OverviewContent"
 import { loginDisplayName } from "@/auth/loginIdentifier"
 import { ScheduleEditor, ManagersEditor } from "@/admin/DepartmentEditors"
@@ -36,6 +38,7 @@ const menuItems: {
   title: string
   description: string
 }[] = [
+  {id: "dashboardData", title: "Rahbar paneli ma’lumotlari", description: "Hisobot va ko‘rsatkichlar"},
   { id: "managers", title: "Rahbariyat shaxsiy qabullari", description: "Murojaatlar bo‘limi" },
   { id: "schedule", title: "Rahbariyat qabul jadvali", description: "HR bo‘limi" },
   { id: "birthday", title: "Xodimlar va tug‘ilgan kunlar", description: "HR bo‘limi" },
@@ -82,7 +85,7 @@ export function AdminPage() {
   const visibleItems = menuItems.filter((item) =>
     canSeeSection(item.id, roles)
   ).sort((a, b) => {
-    const order: Section[] = ["overview", "appeals", "managers", "schedule", "employee", "birthday", "president", "settings"]
+    const order: Section[] = ["overview", "appeals", "managers", "schedule", "employee", "birthday", "president", "dashboardData", "settings"]
     return order.indexOf(a.id) - order.indexOf(b.id)
   })
 
@@ -218,6 +221,7 @@ export function AdminPage() {
           <div className="p-[38px]">
             <div className="mx-auto max-w-[1500px]">
 
+              {showSection("dashboardData") && <Suspense fallback={<p>Yuklanmoqda…</p>}><DashboardEditor /></Suspense>}
               {showSection("overview") && (
                 <OverviewContent />
               )}

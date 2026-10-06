@@ -30,6 +30,7 @@ export function isAppRole(value: unknown): value is AppRole {
 }
 
 export type AdminSection =
+  | "dashboardData"
   | "schedule"
   | "managers"
   | "birthday"
@@ -42,6 +43,7 @@ export type AdminSection =
 // Which roles see which admin section. UI convenience only — the real
 // enforcement is Row Level Security and the publish RPCs in Supabase.
 export const SECTION_ROLES: Record<AdminSection, readonly AppRole[]> = {
+  dashboardData: ["super_admin"],
   schedule: ["super_admin", "hr_admin"],
   managers: ["super_admin", "appeals_admin"],
   birthday: ["super_admin", "hr_admin"],

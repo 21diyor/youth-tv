@@ -1,3 +1,5 @@
+import { lazy, Suspense } from "react"
+const DashboardGate = lazy(() => import("@/dashboard/DashboardGate").then(m=>({default:m.DashboardGate})))
 import { AdminGate } from "@/auth/AdminGate"
 import { AuthProvider } from "@/auth/AuthProvider"
 import { StoreGate } from "@/data/StoreGate"
@@ -5,6 +7,8 @@ import { Slideshow } from "@/Slideshow"
 
 function App() {
   const path = window.location.pathname
+
+  if (path === "/dashboard" || path.startsWith("/dashboard/")) return <AuthProvider><Suspense fallback={<p>Yuklanmoqda…</p>}><DashboardGate /></Suspense></AuthProvider>
 
   // /admin: Supabase Auth first, then the admin content store.
   if (path.startsWith("/admin")) {

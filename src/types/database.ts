@@ -119,6 +119,51 @@ export type Database = {
         }
         Relationships: []
       }
+      dashboard_owner: {
+        Row: {
+          singleton: boolean
+          user_id: string
+        }
+        Insert: {
+          singleton?: boolean
+          user_id: string
+        }
+        Update: {
+          singleton?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
+      dashboard_reports: {
+        Row: {
+          draft: Json
+          id: string
+          published: Json | null
+          published_at: string | null
+          updated_at: string
+          updated_by: string | null
+          version: number
+        }
+        Insert: {
+          draft: Json
+          id?: string
+          published?: Json | null
+          published_at?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
+        }
+        Update: {
+          draft?: Json
+          id?: string
+          published?: Json | null
+          published_at?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
+        }
+        Relationships: []
+      }
       employee_content: {
         Row: {
           achievements: Json
@@ -355,6 +400,7 @@ export type Database = {
         Args: { _role: Database["public"]["Enums"]["app_role"] }
         Returns: boolean
       }
+      is_dashboard_owner: { Args: never; Returns: boolean }
       is_super_admin: { Args: never; Returns: boolean }
       publish_appeals_content: {
         Args: never
@@ -392,6 +438,24 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "birthday_content"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      publish_dashboard_report: {
+        Args: { expected_version: number; report_id: string }
+        Returns: {
+          draft: Json
+          id: string
+          published: Json | null
+          published_at: string | null
+          updated_at: string
+          updated_by: string | null
+          version: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "dashboard_reports"
           isOneToOne: true
           isSetofReturn: false
         }
@@ -512,10 +576,30 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      read_dashboard_reports: { Args: never; Returns: Json }
+      save_dashboard_report: {
+        Args: { expected_version: number; payload: Json; report_id: string | null }
+        Returns: {
+          draft: Json
+          id: string
+          published: Json | null
+          published_at: string | null
+          updated_at: string
+          updated_by: string | null
+          version: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "dashboard_reports"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       set_slide_visibility: {
         Args: { _enabled: boolean; _index?: number; _key: string }
         Returns: undefined
       }
+      valid_dashboard_report: { Args: { p: Json }; Returns: boolean }
       valid_department_content: {
         Args: { kind: string; value: Json }
         Returns: boolean
