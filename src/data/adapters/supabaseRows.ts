@@ -113,6 +113,7 @@ function toEmployee(row: EmployeeRow): EmployeeContent {
 function toSettings(row: SettingsRow): SlideSettings {
   return {
     intervalSeconds: row.interval_seconds,
+    durations: row.durations as Record<string, number>,
     presidentEnabled: row.president_enabled,
     appealsEnabled: row.appeals_enabled,
     employeeEnabled: row.employee_enabled,
@@ -298,6 +299,7 @@ export async function updateDraftRow<K extends TvContentKey>(
         .from("slide_settings")
         .update({
           interval_seconds: v.intervalSeconds,
+          durations: v.durations ?? {},
         })
         .eq("status", "draft")
         .select()

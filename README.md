@@ -138,16 +138,18 @@ Editors use **Saqlash** for drafts, then **E’lon qilish** to publish. The dire
 
 Apply `20261005124035_private_director_dashboard.sql` before deploying the frontend. Provision the Auth owner and seed report privately through database administration; source documents and report values are intentionally excluded from Git and the public bundle. `dashboard_owner` deliberately has no client RLS policies. Its guarded SECURITY DEFINER RPCs are the only reader path. Run `supabase/tests/dashboard.sql` as the database owner on a provisioned project for rollback-only access/publication tests, and `node --test scripts/dashboard-model.test.mjs` for calculation tests.
 
-## HR scheduling
+## Staff and HR scheduling
 
-In `/admin`, HR and Super Admin can use **+ Xodim qo‘shish** for the staff birthday roster, or **+ Oy qo‘shish** for monthly employees. Fill the date, name, photo and message, then **Saqlash → E’lon qilish**. Saved drafts do not change published content.
+HR and Super Admin maintain profiles under **Xodimlar**: name, position, department, portrait and birthday. **Tug‘ilgan kunlar** separately manages greetings and whether annual birthday slides are enabled. Saving complete birthday settings activates the annual greeting in Asia/Tashkent; February 29 appears only in leap years.
 
-Birthdays repeat annually on the selected day/month in Asia/Tashkent. Multiple birthdays each receive a slide; February 29 appears only in leap years. Monthly employees use a year/month, with one active published entry per month. No eligible entry means that slide is skipped. Disable an entry, save and publish to remove it from rotation without deleting it. Global slide toggles still apply.
+In **Oy xodimi**, choose **+ Oy qo‘shish**, select a month and staff member, and enter the recognition reason. **Saqlash va e’lon qilish** saves and publishes together. Future months can be prepared in advance; only the current month is shown. The next unused month is suggested automatically. Profiles and portraits come from the staff directory, including later saved changes, without republishing each monthly award. Legacy records without a unique staff match require selection from the directory.
 
-TVs fetch only current eligible records every 30 seconds and refresh at the Tashkent date boundary. HR does not need to keep their computer open. Future entries and the full roster remain private. Existing monthly content retains its original month; the legacy birthday is preserved as a draft until HR supplies its actual date.
+Only eligible published birthdays and monthly awards are returned to TVs. Future plans and the full staff directory remain private. Global slide toggles still apply.
 
-### Shared staff directory
+## Synchronized TV playback
 
-HR enters each person once under **Xodimlar va tug‘ilgan kunlar**: name, position, department, photo, birthday and greeting. Saving a complete profile with automatic greetings enabled activates its annual birthday slide; no separate publish step is needed. Incomplete entries can remain drafts.
+All TVs obtain the same published playlist and server time through `tv_playback_state()` every ten seconds. Playback uses absolute server time anchored to the browser's monotonic clock, so opening or reloading a TV does not restart the slideshow. Transitions are included in each slide's duration. Existing open TVs need one reload when upgrading to this player.
 
-For **Oy xodimi**, choose **+ Oy qo‘shish**, select the year/month (including future months), choose a staff member, and enter the reason. Save and publish the monthly plan. The person's profile and photo are reused, and the server validates the selected staff record at publication. Published monthly awards keep a snapshot of that profile; publishing again refreshes it from the directory. One current-month award appears, and future awards remain private until their month starts. Existing records have been preserved and the previous monthly employee imported into the directory without inventing a birthday.
+Super Admin can set individual slide durations (5–300 seconds) under **Slayd sozlamalari**, then **Vaqtlarni e’lon qilish**. Blank values use the default duration; the birthday duration applies to each eligible birthday. Previous/next and pause affect only that screen; **Sinxron efirga qaytish** immediately rejoins the shared timeline. An already-running screen retains its last playlist and clock during a network interruption and resynchronizes on reconnection.
+
+Apply `20261006102938_staff_profiles_and_synced_playback.sql` before deploying this frontend. `supabase/tests/synced-playback.sql` checks live profile projection, private/future data exclusion, duration validation and anonymous permissions using rolled-back fixtures. `node --test scripts/playback-timeline.test.mjs` verifies timing boundaries and independently started screens.

@@ -335,6 +335,7 @@ export type Database = {
       slide_settings: {
         Row: {
           appeals_enabled: boolean
+          durations: Json
           employee_enabled: boolean
           interval_seconds: number
           president_enabled: boolean
@@ -346,6 +347,7 @@ export type Database = {
         }
         Insert: {
           appeals_enabled: boolean
+          durations?: Json
           employee_enabled: boolean
           interval_seconds: number
           president_enabled: boolean
@@ -357,6 +359,7 @@ export type Database = {
         }
         Update: {
           appeals_enabled?: boolean
+          durations?: Json
           employee_enabled?: boolean
           interval_seconds?: number
           president_enabled?: boolean
@@ -560,6 +563,7 @@ export type Database = {
         Args: never
         Returns: {
           appeals_enabled: boolean
+          durations: Json
           employee_enabled: boolean
           interval_seconds: number
           president_enabled: boolean
@@ -599,6 +603,7 @@ export type Database = {
         Args: { _enabled: boolean; _index?: number; _key: string }
         Returns: undefined
       }
+      tv_playback_state: { Args: never; Returns: Json }
       valid_dashboard_report: { Args: { p: Json }; Returns: boolean }
       valid_department_content: {
         Args: { kind: string; value: Json }
@@ -608,6 +613,7 @@ export type Database = {
         Args: { complete?: boolean; kind: string; p: Json }
         Returns: boolean
       }
+      valid_slide_durations: { Args: { value: Json }; Returns: boolean }
     }
     Enums: {
       app_role:

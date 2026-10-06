@@ -46,6 +46,7 @@ export type AppealsContent = {
 
 export type SlideSettings = {
   intervalSeconds: number
+  durations?: Record<string, number>
   presidentEnabled: boolean
   appealsEnabled: boolean
   employeeEnabled: boolean

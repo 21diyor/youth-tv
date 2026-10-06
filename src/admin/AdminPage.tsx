@@ -41,7 +41,8 @@ const menuItems: {
   {id: "dashboardData", title: "Rahbar paneli ma’lumotlari", description: "Hisobot va ko‘rsatkichlar"},
   { id: "managers", title: "Rahbariyat shaxsiy qabullari", description: "Murojaatlar bo‘limi" },
   { id: "schedule", title: "Rahbariyat qabul jadvali", description: "HR bo‘limi" },
-  { id: "birthday", title: "Xodimlar va tug‘ilgan kunlar", description: "HR bo‘limi" },
+  { id: "staff", title: "Xodimlar", description: "Yagona xodimlar ro‘yxati" },
+  { id: "birthday", title: "Tug‘ilgan kunlar", description: "Avtomatik tabriklar" },
   {
     id: "overview",
     title: "Umumiy ko‘rinish",
@@ -85,7 +86,7 @@ export function AdminPage() {
   const visibleItems = menuItems.filter((item) =>
     canSeeSection(item.id, roles)
   ).sort((a, b) => {
-    const order: Section[] = ["overview", "appeals", "managers", "schedule", "employee", "birthday", "president", "dashboardData", "settings"]
+    const order: Section[] = ["overview", "appeals", "managers", "schedule", "staff", "employee", "birthday", "president", "dashboardData", "settings"]
     return order.indexOf(a.id) - order.indexOf(b.id)
   })
 
@@ -113,10 +114,10 @@ export function AdminPage() {
 
   return (
     <main data-admin-theme={adminTheme} className="admin-surface min-h-screen bg-[#F5F5F3] text-[#171717]">
-      <div className="grid min-h-screen grid-cols-[280px_1fr]">
+      <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)]">
 
         {/* SIDEBAR */}
-        <aside className="flex min-h-screen flex-col border-r border-neutral-200 bg-white px-[22px] py-[26px]">
+        <aside className="flex lg:min-h-screen flex-col border-r border-neutral-200 bg-white px-[22px] py-[26px]">
           <div className="border-b border-neutral-200 pb-[24px]">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-400">
               Yoshlar ishlari agentligi
@@ -127,7 +128,7 @@ export function AdminPage() {
             </h1>
           </div>
 
-          <nav className="mt-[22px] space-y-[4px]">
+          <nav className="mt-[22px] flex gap-1 overflow-x-auto lg:block lg:space-y-[4px]">
             {visibleItems.map((item) => {
               const active = currentItem.id === item.id
 
@@ -135,7 +136,7 @@ export function AdminPage() {
                 <button
                   key={item.id}
                   onClick={() => setActiveSection(item.id)}
-                  className={`w-full px-[14px] py-[12px] text-left transition-colors ${
+                  className={`w-auto shrink-0 lg:w-full px-[14px] py-[12px] text-left transition-colors ${
                     active
                       ? "bg-[#F0F4FF] text-[#1D4ED8]"
                       : "text-neutral-700 hover:bg-neutral-100"
@@ -159,7 +160,7 @@ export function AdminPage() {
             })}
           </nav>
 
-          <div className="mt-auto border-t border-neutral-200 pt-[18px]">
+          <div className="hidden lg:block mt-auto border-t border-neutral-200 pt-[18px]">
             <p className="text-[11px] font-medium text-neutral-400">
               TV Monitoring Platform
             </p>
@@ -174,7 +175,7 @@ export function AdminPage() {
         <section className="min-w-0">
 
           {/* TOP BAR */}
-          <header className="flex h-[82px] items-center justify-between border-b border-neutral-200 bg-white px-[38px]">
+          <header className="flex min-h-[82px] flex-wrap items-center justify-between gap-4 border-b border-neutral-200 bg-white px-5 py-4 lg:px-[38px]">
             <div>
               <h2 className="text-[20px] font-semibold tracking-[-0.025em]">
                 {currentItem.title}
@@ -185,7 +186,7 @@ export function AdminPage() {
               </p>
             </div>
 
-            <div className="flex items-center gap-[12px]">
+            <div className="flex flex-wrap items-center gap-[12px]">
               <button type="button" onClick={toggleTheme} aria-label="Admin mavzusini almashtirish" aria-pressed={adminTheme === "dark"} className="rounded-lg border border-neutral-200 bg-white px-4 py-2 text-sm font-semibold">{adminTheme === "dark" ? "☀ Yorug‘ rejim" : "☾ Tungi rejim"}</button>
               <a
                 href="/"
@@ -218,7 +219,7 @@ export function AdminPage() {
           </header>
 
           {/* CONTENT */}
-          <div className="p-[38px]">
+          <div className="p-5 lg:p-[38px]">
             <div className="mx-auto max-w-[1500px]">
 
               {showSection("dashboardData") && <Suspense fallback={<p>Yuklanmoqda…</p>}><DashboardEditor /></Suspense>}
@@ -227,7 +228,8 @@ export function AdminPage() {
               )}
               {showSection("schedule") && <ScheduleEditor />}
               {showSection("managers") && <ManagersEditor />}
-              {showSection("birthday") && <ScheduledHrEditor key="birthday" kind="birthday" />}
+              {showSection("staff") && <ScheduledHrEditor key="staff" mode="staff" />}
+              {showSection("birthday") && <ScheduledHrEditor key="birthday" mode="birthday" onOpenStaff={() => setActiveSection("staff")} />}
 
               {showSection("president") && (
                 <PresidentEditor />
@@ -238,7 +240,7 @@ export function AdminPage() {
                 )}
 
               {showSection("employee") && (
-                <ScheduledHrEditor key="employee" kind="employee" />
+                <ScheduledHrEditor key="employee" mode="employee" onOpenStaff={() => setActiveSection("staff")} />
                 )}
 
               {showSection("settings") && (

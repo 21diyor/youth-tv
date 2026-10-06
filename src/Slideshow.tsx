@@ -1,35 +1,32 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
+import { useCallback, useEffect, useState, type ReactNode } from "react"
 import { CitizenAppealsSlide } from "@/slides/CitizenAppealsSlide"
 import { EmployeeOfMonthSlide } from "@/slides/EmployeeOfMonthSlide"
 import { PresidentQuoteSlide } from "@/slides/PresidentQuoteSlide"
 import { BirthdaySlide, ManagementScheduleSlide, ManagerAppealsSlide } from "@/slides/DepartmentSlides"
-import { usePublishedContent } from "@/hooks/usePublishedContent"
+import {usePlaybackState,type PlaybackState} from "@/hooks/usePlaybackState"
+import {timelinePosition,type TimedSlide} from "@/lib/playbackTimeline"
 import { useTvTheme } from "@/hooks/useTvTheme"
-import { useCurrentHrSlides } from "@/data/hrPlans"
 import { ChevronLeft, ChevronRight, Pause, Play, Maximize, Minimize } from "lucide-react"
 
 const TRANSITION_MS = 450
 
 export function Slideshow() {
-  const hr = useCurrentHrSlides()
-  const settings = usePublishedContent("settings")
-  const schedule = usePublishedContent("schedule")
-  const managers = usePublishedContent("managers")
-  const birthday = usePublishedContent("birthday")
-  const slides = [
-    { id: "appeals", enabled: settings.appealsEnabled, element: <CitizenAppealsSlide /> },
-    { id: "schedule", enabled: schedule.enabled, element: <ManagementScheduleSlide /> },
-    ...managers.managers.map((manager, index) => ({ id: `manager-${index}`, enabled: manager.enabled, element: <ManagerAppealsSlide index={index} /> })),
-    ...(hr?.birthdays ?? []).map(person => ({id:`birthday-${person.id}`, enabled:birthday.enabled, element:<BirthdaySlide content={person} />})),
-    ...(hr?.employee ? [{id:`employee-${hr.employee.id}`,enabled:settings.employeeEnabled,element:<EmployeeOfMonthSlide content={hr.employee}/>}]:[]),
-    { id: "president", enabled: settings.presidentEnabled, element: <PresidentQuoteSlide /> },
-  ].filter(slide => slide.enabled)
-  const ids = slides.map(slide => slide.id).join(",")
-  const duration = Math.max(5, settings.intervalSeconds) * 1000
-  return <Playback key={`${ids}-${duration}`} slides={slides} duration={duration} />
+  const {state,offline}=usePlaybackState()
+  if(!state)return <main className="tv-playback tv-empty">{offline?"Serverga ulanilmoqda… Internet aloqasini tekshiring.":"TVlar sinxronlanmoqda…"}</main>
+  const slides=state.slides.map(slot=>{
+    let element:ReactNode=null
+    if(slot.id==="appeals")element=<CitizenAppealsSlide/>
+    else if(slot.id==="schedule")element=<ManagementScheduleSlide/>
+    else if(slot.id==="president")element=<PresidentQuoteSlide/>
+    else if(slot.id.startsWith("manager-"))element=<ManagerAppealsSlide index={Number(slot.id.split("-")[1])}/>
+    else if(slot.id.startsWith("birthday-")){const person=state.hr.birthdays.find(p=>"birthday-"+p.id===slot.id);if(person)element=<BirthdaySlide content={person}/>}
+    else if(slot.id.startsWith("employee-")&&state.hr.employee)element=<EmployeeOfMonthSlide content={state.hr.employee}/>
+    return {...slot,element}
+  })
+  return <Playback slides={slides} state={state} offline={offline}/>
 }
 
-function Playback({ slides, duration }: { slides: { id: string; element: ReactNode }[]; duration: number }) {
+function Playback({slides,state,offline}:{slides:(TimedSlide & {element:ReactNode})[];state:PlaybackState;offline:boolean}) {
   const theme = useTvTheme()
   const [viewport, setViewport] = useState(() => ({ width: window.innerWidth, height: window.innerHeight }))
   const scale = Math.min(viewport.width / 1920, viewport.height / 1080)
@@ -39,52 +36,26 @@ function Playback({ slides, duration }: { slides: { id: string; element: ReactNo
     window.addEventListener("resize", resize)
     return () => window.removeEventListener("resize", resize)
   }, [])
-  const ids = slides.map(slide => slide.id).join(",")
-  // Start each playlist at its first enabled slide.
-  const [activeId, setActiveId] = useState("appeals")
-  const [cycle, setCycle] = useState(0)
-  const [leaving, setLeaving] = useState(false)
-  const [paused, setPaused] = useState(false)
-  const [fullscreen, setFullscreen] = useState(!!document.fullscreenElement)
-  const [controlMessage, setControlMessage] = useState("")
-  const [controlsVisible, setControlsVisible] = useState(true)
-  const remaining = useRef(duration)
-  const timedCycle = useRef(0)
-  const activeIndex = Math.max(0, slides.findIndex(slide => slide.id === activeId))
-  const current = slides[activeIndex]
-  const currentId = current?.id
-  const timer = useRef<number | undefined>(undefined)
-  const locked = useRef(false)
-
-  const advance = useCallback((direction: number) => {
-    if (locked.current) return
-    const order = ids ? ids.split(",") : []
-    if (!order.length) return
-    locked.current = true
-    setLeaving(true)
-    timer.current = window.setTimeout(() => {
-      const index = Math.max(0, order.indexOf(currentId ?? ""))
-      setActiveId(order[(index + direction + order.length) % order.length])
-      setCycle(value => value + 1)
-      setLeaving(false)
-      locked.current = false
-    }, TRANSITION_MS)
-  }, [ids, currentId])
-
-  useEffect(() => {
-    if (timedCycle.current !== cycle) {
-      timedCycle.current = cycle
-      remaining.current = duration
-    }
-    if (paused || leaving || !currentId) return
-    const started = performance.now()
-    const timeout = window.setTimeout(() => advance(1), remaining.current)
-    return () => {
-      window.clearTimeout(timeout)
-      remaining.current = Math.max(0, remaining.current - (performance.now() - started))
-    }
-  }, [advance, duration, cycle, paused, leaving, currentId])
-
+  const [tick,setTick]=useState(()=>performance.now())
+  const [manual,setManual]=useState<{id:string;elapsed:number}|null>(null)
+  const paused=manual!==null
+  const [fullscreen,setFullscreen]=useState(!!document.fullscreenElement)
+  const [controlMessage,setControlMessage]=useState("")
+  const [controlsVisible,setControlsVisible]=useState(true)
+  useEffect(()=>{const timer=window.setInterval(()=>setTick(performance.now()),50);return()=>clearInterval(timer)},[])
+  const live=timelinePosition(slides,state.serverNow+tick-state.measuredAt)
+  const manualIndex=manual?slides.findIndex(s=>s.id===manual.id):-1
+  const activeIndex=manualIndex>=0?manualIndex:live?.index??0
+  const current=slides[activeIndex]
+  const elapsed=manualIndex>=0?Math.min(manual!.elapsed,current.durationMs):live?.elapsed??0
+  const duration=current?.durationMs??5000
+  const leaving=!paused&&duration-elapsed<=TRANSITION_MS
+  const togglePause=useCallback(()=>setManual(old=>old?null:current?{id:current.id,elapsed}:null),[current,elapsed])
+  const advance=useCallback((direction:number)=>{
+    if(!slides.length)return
+    const next=slides[(activeIndex+direction+slides.length)%slides.length]
+    setManual({id:next.id,elapsed:0})
+  },[slides,activeIndex])
   useEffect(() => {
     const refresh = () => setFullscreen(!!document.fullscreenElement)
     document.addEventListener("fullscreenchange", refresh)
@@ -130,37 +101,29 @@ function Playback({ slides, duration }: { slides: { id: string; element: ReactNo
       }
       if (event.code === "Space" && !(event.target instanceof HTMLElement && event.target.closest("button"))) {
         event.preventDefault()
-        setPaused(value => !value)
+        togglePause()
       }
     }
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
-  }, [advance])
-
-  // Cancel any transition whose captured playlist is no longer current.
-  useEffect(() => {
-    return () => {
-      window.clearTimeout(timer.current)
-      locked.current = false
-    }
-  }, [ids])
+  }, [advance,togglePause])
 
   if (!current) return <main className="tv-playback tv-empty" data-theme={theme}>Faol slayd mavjud emas</main>
-  return <div className="tv-playback" data-theme={theme}>
+  return <div className="tv-playback" data-theme={theme} data-slide-id={current.id} data-synced={!paused} data-duration-ms={duration}>
     <div className="tv-canvas" style={{ transform: `translate(-50%, -50%) scale(${scale})`, ...{ "--tv-side-margin": `${sideMargin}px` } }}>
-    <div key={`${current.id}-${cycle}`} className={`tv-slide ${leaving ? "tv-slide-leaving" : "tv-slide-entering"}`}>
+    <div key={`${current.id}-${paused?"manual":live?.cycle}`} className={`tv-slide ${leaving ? "tv-slide-leaving" : "tv-slide-entering"}`}>
       {current.element}
     </div>
     </div>
     <div className="tv-progress-track" aria-hidden="true">
-      <div key={`${current.id}-${ids}-${cycle}-${duration}`} className="tv-progress-fill" style={{ animationDuration: `${duration}ms`, animationPlayState: paused || leaving ? "paused" : "running" }} />
+      <div className="tv-progress-fill" style={{animation:"none",transform:`scaleX(${Math.min(1,elapsed/duration)})`}} />
     </div>
     <nav className={`tv-controls ${controlsVisible || paused || controlMessage ? "is-visible" : ""}`} aria-label="Slayd boshqaruvi">
-      <button onClick={() => advance(-1)} disabled={leaving} aria-label="Oldingi slayd" title="Oldingi slayd"><ChevronLeft /><span>Oldingi</span></button>
-      <button onClick={() => setPaused(value => !value)} aria-label={paused ? "Davom ettirish" : "Pauza"} aria-pressed={paused}>{paused ? <Play /> : <Pause />}<span>{paused ? "Davom ettirish" : "Pauza"}</span></button>
-      <button onClick={() => advance(1)} disabled={leaving} aria-label="Keyingi slayd" title="Keyingi slayd"><span>Keyingi</span><ChevronRight /></button>
+      <button onClick={() => advance(-1)} aria-label="Oldingi slayd" title="Oldingi slayd"><ChevronLeft /><span>Oldingi</span></button>
+      <button onClick={() => togglePause()} aria-label={paused ? "Sinxron efirga qaytish" : "Pauza"} aria-pressed={paused}>{paused ? <Play /> : <Pause />}<span>{paused ? "Sinxron efirga qaytish" : "Pauza"}</span></button>
+      <button onClick={() => advance(1)} aria-label="Keyingi slayd" title="Keyingi slayd"><span>Keyingi</span><ChevronRight /></button>
       <button onClick={toggleFullscreen} aria-label={fullscreen ? "To‘liq ekrandan chiqish" : "To‘liq ekran"} title="To‘liq ekran">{fullscreen ? <Minimize /> : <Maximize />}<span>{fullscreen ? "Chiqish" : "To‘liq ekran"}</span></button>
-      {controlMessage && <p role="status">{controlMessage}</p>}
+      {paused&&<p>Faqat shu ekranda pauza</p>}{offline&&<p>Oflayn · oxirgi jadval</p>}{controlMessage && <p role="status">{controlMessage}</p>}
     </nav>
   </div>
 }
