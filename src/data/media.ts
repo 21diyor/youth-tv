@@ -62,6 +62,18 @@ function uploadErrorMessage(error: { message?: string; statusCode?: string | num
   return "Rasmni yuklab bo‘lmadi. Qayta urinib ko‘ring."
 }
 
+async function optimizeUpload(file:File):Promise<Blob> {
+ const url=URL.createObjectURL(file)
+ try {
+  const image=new Image()
+  await new Promise<void>((resolve,reject)=>{image.onload=()=>resolve();image.onerror=()=>reject(new Error("Rasmni o‘qib bo‘lmadi"));image.src=url})
+  const ratio=Math.min(1,1200/image.naturalWidth,1400/image.naturalHeight)
+  const canvas=document.createElement('canvas');canvas.width=Math.round(image.naturalWidth*ratio);canvas.height=Math.round(image.naturalHeight*ratio)
+  const ctx=canvas.getContext('2d')!;ctx.fillStyle='#ffffff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(image,0,0,canvas.width,canvas.height)
+  return await new Promise<Blob>((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(new Error('Rasm tayyorlanmadi')),'image/jpeg',0.82))
+ }finally{URL.revokeObjectURL(url)}
+}
+
 async function upload(folder: "president" | "employee" | "birthday" | "schedule" | "managers", file: File) {
   if (tvBackend !== "supabase") {
     throw new Error("Rasm yuklash faqat Supabase rejimida ishlaydi.")
@@ -73,16 +85,17 @@ async function upload(folder: "president" | "employee" | "birthday" | "schedule"
     throw new Error(invalid)
   }
 
-  const path = `${folder}/${crypto.randomUUID()}.${EXTENSIONS[file.type]}`
+  const optimized = await optimizeUpload(file)
+  const path = `${folder}/${crypto.randomUUID()}.jpg`
 
   let result
 
   try {
     result = await getSupabase()
       .storage.from(BUCKET)
-      .upload(path, file, {
+      .upload(path, optimized, {
         upsert: false, // never overwrite
-        contentType: file.type,
+        contentType: "image/jpeg",
         // Private files: tell any cache not to keep them (see supabase.ts).
         cacheControl: "0",
       })
@@ -123,20 +136,19 @@ export function uploadManagerPortrait(file: File): Promise<string> {
 // AUTHENTICATED IMAGE LOADING (private bucket → blob URL)
 // ======================================================
 
-const MAX_CACHED = 12
+const MAX_CACHED = 48
+const consumers = new Map<string,number>()
 const urlCache = new Map<string, Promise<string>>()
 
 function remember(path: string, promise: Promise<string>) {
   urlCache.set(path, promise)
 
-  // Keep the cache small; release the oldest blob URLs.
-  while (urlCache.size > MAX_CACHED) {
-    const [oldestPath, oldest] = urlCache.entries().next().value as [
-      string,
-      Promise<string>,
-    ]
+  // Never revoke a URL that is still displayed by a mounted portrait.
+  for(const [oldestPath,oldest] of urlCache){
+    if(urlCache.size<=MAX_CACHED)break
+    if(consumers.get(oldestPath))continue
     urlCache.delete(oldestPath)
-    void oldest.then((url) => URL.revokeObjectURL(url)).catch(() => {})
+    void oldest.then(url=>URL.revokeObjectURL(url)).catch(()=>{})
   }
 }
 
@@ -144,6 +156,10 @@ function remember(path: string, promise: Promise<string>) {
  * Object URL for a tv-media path, downloaded with the signed-in user's
  * session (RLS decides: editors see drafts, TVs only published images).
  */
+async function fetchTvImage(path:string) {
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),25000)
+ try{const response=await fetch('/api/tv-image?path='+encodeURIComponent(path),{signal:controller.signal,cache:'no-store'});if(!response.ok)throw new Error('Rasm yuklanmadi');return await response.blob()}finally{clearTimeout(timer)}
+}
 export function loadMediaUrl(path: string): Promise<string> {
   const cached = urlCache.get(path)
 
@@ -151,16 +167,13 @@ export function loadMediaUrl(path: string): Promise<string> {
     return cached
   }
 
-  const promise = getSupabase()
-    .storage.from(BUCKET)
-    .download(path)
-    .then(({ data, error }) => {
-      if (error || !data) {
-        throw error ?? new Error("Rasm topilmadi")
-      }
-
-      return URL.createObjectURL(data)
-    })
+  const publicTv=!window.location.pathname.startsWith('/admin')&&!window.location.pathname.startsWith('/dashboard')
+  const promise = publicTv&&!import.meta.env.DEV
+    ? fetchTvImage(path).then(blob=>URL.createObjectURL(blob))
+    : getSupabase().storage.from(BUCKET).download(path).then(({data,error})=>{
+        if(error||!data)throw error??new Error('Rasm topilmadi')
+        return URL.createObjectURL(data)
+      })
 
   remember(path, promise)
 
@@ -198,6 +211,7 @@ export function useMediaUrl(path: string | null | undefined) {
       return
     }
 
+    consumers.set(wanted,(consumers.get(wanted)||0)+1)
     let cancelled = false
 
     let loaded = false
@@ -225,11 +239,12 @@ export function useMediaUrl(path: string | null | undefined) {
     }
     load()
     // Recover a failed photo request on unattended TVs, even with one slide.
-    const timer = window.setInterval(load, 30_000)
+    const timer = window.setInterval(load, 5_000)
     window.addEventListener("online", load)
 
     return () => {
       cancelled = true
+      consumers.set(wanted,Math.max(0,(consumers.get(wanted)||1)-1))
       window.clearInterval(timer)
       window.removeEventListener("online", load)
     }
@@ -242,4 +257,12 @@ export function useMediaUrl(path: string | null | undefined) {
     loading: wanted !== null && !ready,
     failed: ready && state.failed,
   }
+}
+
+const preloading=new Set<string>()
+export function preloadMedia(paths:(string|null|undefined)[]) {
+ const queue=[...new Set(paths.filter((p):p is string=>!!p))].filter(p=>!urlCache.has(p)&&!preloading.has(p))
+ queue.forEach(p=>preloading.add(p))
+ const worker=async()=>{for(let path=queue.shift();path;path=queue.shift()){try{await loadMediaUrl(path)}catch{/* Mounted images retry. */}finally{preloading.delete(path)}}}
+ void worker();void worker()
 }

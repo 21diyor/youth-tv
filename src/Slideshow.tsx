@@ -1,3 +1,6 @@
+import { useDeploymentUpdate } from "@/hooks/useDeploymentUpdate"
+import { preloadMedia } from "@/data/media"
+import { getPublished } from "@/data/tvStore"
 import { HrGroupSlide } from "@/slides/HrGroupSlide"
 import { useCallback, useEffect, useState, type ReactNode } from "react"
 import { CitizenAppealsSlide } from "@/slides/CitizenAppealsSlide"
@@ -13,6 +16,13 @@ const TRANSITION_MS = 450
 
 export function Slideshow() {
   const {state,offline}=usePlaybackState()
+  useDeploymentUpdate()
+  useEffect(()=>{
+    if(!state)return
+    const paths:(string|null|undefined)[]=[...state.hr.birthdays,...state.hr.employees].map(p=>p.photoPath)
+    paths.push(...getPublished('schedule').entries.map(p=>p.photoPath),...getPublished('managers').managers.map(p=>p.photoPath))
+    preloadMedia(paths)
+  },[state])
   if(!state)return <main className="tv-playback tv-empty">{offline?"Serverga ulanilmoqda… Internet aloqasini tekshiring.":"TVlar sinxronlanmoqda…"}</main>
   const slides=state.slides.map(slot=>{
     let element:ReactNode=null

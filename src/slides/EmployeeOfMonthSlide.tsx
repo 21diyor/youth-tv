@@ -11,6 +11,7 @@ export function EmployeeOfMonthSlide({content}: {content:HrSlide}) {
         <p className="tv-eyebrow">{calendar.month} {calendar.year}</p>
         <h2 className="tv-person-name">{content.name}</h2>
         <p className="tv-person-role">{content.position}</p>
+        {content.department&&<p className="tv-person-department">{content.department}</p>}
         <p className="tv-message tv-recognition">{content.recognition}</p>
       </div>
     </div>

@@ -157,3 +157,11 @@ Apply `20261006102938_staff_profiles_and_synced_playback.sql` before deploying t
 ## Group celebrations
 
 Monthly awards support multiple distinct staff per month. Each entry keeps its own recognition reason. TVs show **Oy xodimlari**, followed by each employee poster. Birthdays follow the same sequence for today’s staff. Overview pages contain up to six people to keep names readable, with no fixed total staff limit. Separate group durations are available in Slayd sozlamalari; existing employee/birthday switches control the entire sequence. Apply `20261006162731_multiple_hr_awards.sql`; verify with the rollback-only `supabase/tests/multiple-hr-awards.sql`.
+
+## Unattended updates and portraits
+
+Production builds emit version.json; TV pages check it every 30 seconds and reload on a new release. One initial manual reload installs this capability on older players. Admin pages do not auto-reload and discard drafts.
+
+The /api/tv-image endpoint downloads using the anonymous publishable key, so Storage RLS still permits only published media. It serves baseline JPEGs bounded to 1200×1400, including older large uploads. Uploads are also resized and compressed in the admin browser. TV portraits are preloaded with two workers, retried after failures, and held in a bounded memory cache that never revokes actively displayed URLs. Responses are not persisted in the HTTP cache.
+
+The visibility RPC now explicitly filters its draft/published rows, satisfying the API's safeupdate protection. Existing role checks remain in place.

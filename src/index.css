@@ -301,3 +301,5 @@
 .tv-hr-group-card .tv-portrait { flex:1; min-height:0; }
 .tv-hr-group-card h2 { font-size:32px; line-height:1.18; text-align:center; font-weight:700; }
 .tv-hr-group-many .tv-hr-group-card h2 { font-size:28px; }
+
+.tv-person-department { color:var(--tv-muted); font-size:28px; line-height:1.3; margin-top:12px; }
