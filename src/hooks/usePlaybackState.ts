@@ -13,15 +13,16 @@ export function usePlaybackState() {
    if(busy)return
    busy=true
    const sent=performance.now()
+   const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),20000)
    try {
-    const {data,error}=await getSupabase().rpc('tv_playback_state')
+    const {data,error}=await getSupabase().rpc('tv_playback_state').abortSignal(controller.signal)
     if(cancelled)return
     if(error||!data)throw error
     const result=data as unknown as {slides:TimedSlide[];hr:CurrentHrSlides;serverNow:number}
     const received=performance.now()
     setState({...result,...clockAnchor(result.serverNow,sent,received)})
     setOffline(false)
-   }catch{if(!cancelled)setOffline(true)}finally{busy=false}
+   }catch{if(!cancelled)setOffline(true)}finally{clearTimeout(timeout);busy=false}
   }
   void refresh()
   const timer=window.setInterval(refresh,10000)
@@ -32,3 +33,4 @@ export function usePlaybackState() {
  },[])
  return {state,offline}
 }
+
