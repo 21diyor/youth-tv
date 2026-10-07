@@ -30,3 +30,16 @@ test('comparisons never mix units or reporting periods; missing is distinct from
  assert.equal(canCompare([]),false)
  assert.equal(metricPeriod('2026-01/2026-05'),'2026 · yanvar–may')
 })
+
+test('admin layout, order, visibility, duration and overview settings drive playback',()=>{
+ const r=report([section('a',Array.from({length:7},(_,i)=>metric(`a-${i}`))),section('b',[metric('b')])])
+ r.presentation={showOverview:false,duration:30}
+ r.sections[0]={...r.sections[0],chart:'cards',pageSize:3,duration:45}
+ r.sections[1].visible=false
+ const slides=buildDashboardSlides(r)
+ assert.equal(slides.length,3)
+ assert.deepEqual(slides.map(s=>s.metrics.length),[3,3,1])
+ assert.ok(slides.every(s=>s.chart==='cards'&&s.duration===45))
+ r.sections[0].visible=false
+ assert.deepEqual(buildDashboardSlides(r),[])
+})

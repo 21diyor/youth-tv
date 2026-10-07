@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
-export function LoginPage() {
+export function LoginPage({dashboardAdmin=false}:{dashboardAdmin?:boolean}) {
   const { signIn } = useAuth()
 
   const [email, setEmail] = useState("")
@@ -56,11 +56,11 @@ export function LoginPage() {
         </p>
 
         <h1 className="mt-[7px] text-[28px] font-semibold tracking-[-0.04em]">
-          TV boshqaruvi
+          {dashboardAdmin?'Rahbar paneli boshqaruvi':'TV boshqaruvi'}
         </h1>
 
         <p className="mt-[6px] text-[13px] leading-[1.6] text-neutral-500">
-          Bo‘lim uchun login, Super Admin uchun email kiriting.
+          {dashboardAdmin?'Dashboard administratori emaili va parolini kiriting.':'Bo‘lim uchun login, Super Admin uchun email kiriting.'}
         </p>
 
         <form

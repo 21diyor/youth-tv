@@ -76,8 +76,9 @@ export function getSupabase(): TvSupabaseClient {
     )
   }
 
-  const director = window.location.pathname.startsWith("/dashboard")
-  const admin = window.location.pathname.startsWith("/admin") || director
+  const dashboardAdmin = ['/dashboard-admin','/dashboard/admin'].includes(window.location.pathname)
+  const director = !dashboardAdmin && window.location.pathname.startsWith("/dashboard")
+  const admin = window.location.pathname.startsWith("/admin") || dashboardAdmin || director
   client = createClient<Database>(url, publishableKey, {
     auth: {
       persistSession: admin,

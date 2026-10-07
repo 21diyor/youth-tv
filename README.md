@@ -130,6 +130,14 @@ See [supabase/README.md](supabase/README.md) for backend status and migration no
 
 ## Private director dashboard
 
+### Dashboard administration
+
+`/dashboard-admin` (also `/dashboard/admin`) is the dedicated editor. Sign in with the existing Super Admin email and password; it uses the admin session, separate from the director session. HR, appeals and the director's read-only account cannot edit reports. The existing TV admin entry also opens this editor.
+
+**Ma’lumotlar** manages section titles, categories, metrics, values, units, periods and source notes. Sections and metrics can be added, removed with undo, and reordered. **Slaydlar va vaqt** controls visibility, default/per-section durations (5–300 seconds), overview title and four headline metrics. Each section supports automatic charts, comparison bars or number cards, with 2–6 metrics per slide. Bars require compatible units and periods; otherwise cards preserve the separate measures.
+
+**Ko‘rib chiqish** previews the current unsaved draft in the actual slideshow. **Qoralamani saqlash** saves privately; **Saqlash va e’lon qilish** saves then publishes with optimistic version checks. Published data updates on the director page within one minute. **Hisobot sozlamalari** manages report date/title/source and restores the published copy into the draft. No source data is embedded in the frontend. Existing database RLS/RPC guards remain the authority; no database migration is needed for the optional presentation fields.
+
 `/dashboard` has a separate Supabase Auth session and a single designated owner account. The username is `dashboard`; its password is provisioned in Auth and is never stored in source code. The owner can read published reports only. Anonymous visitors and department accounts cannot retrieve dashboard data. Super Admin manages the data through `/admin` → **Rahbar paneli ma’lumotlari**, but does not receive access to the director dashboard itself.
 
 The initial report contains 222 indicators in 26 sections from the supplied 1 June 2026 report. Eight views offer chart drilldowns, sorting, indicator search, scoped CSV downloads, source notes, and a report-date selector. Missing values remain missing; overlapping categories are not added together. Source discrepancies are retained and explained.

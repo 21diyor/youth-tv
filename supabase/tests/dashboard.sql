@@ -42,6 +42,13 @@ do $$ declare r public.dashboard_reports; old jsonb; begin
  begin perform public.publish_dashboard_report(r.id,r.version-1);raise exception 'Stale publish accepted';exception when serialization_failure then null;end;
  r:=public.publish_dashboard_report(r.id,r.version);
  if r.published->>'title'<>'Verification draft' then raise exception 'Publish failed';end if;
+ old:=r.published;
+ r:=public.save_dashboard_report(r.id,r.version,
+  jsonb_set(jsonb_set(r.draft,'{presentation}','{"title":"Test overview","duration":35,"showOverview":true}'),
+   '{sections,0}',(r.draft->'sections'->0)||'{"visible":false,"chart":"cards","duration":45,"pageSize":3}'::jsonb));
+ if r.published is distinct from old then raise exception 'Presentation draft leaked';end if;
+ r:=public.publish_dashboard_report(r.id,r.version);
+ if r.published#>>'{presentation,duration}'<>'35' or r.published#>>'{sections,0,visible}'<>'false' or r.published#>>'{sections,0,pageSize}'<>'3' then raise exception 'Presentation settings lost';end if;
  if public.valid_dashboard_report(jsonb_set(r.draft,'{sections,0,metrics,0,value}','-1')) then raise exception 'Negative accepted';end if;
 end $$;
 rollback;

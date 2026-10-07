@@ -1,6 +1,6 @@
 export type Metric = { id: string; label: string; value: number | null; unit: string; period: string; note: string }
-export type ReportSection = { id: string; title: string; group: string; sourceSection: string; note: string; metrics: Metric[] }
-export type DirectorReport = { title: string; asOf: string; source: string; sourceHash?: string; sourceText?: string; sections: ReportSection[] }
+export type ReportSection = { id: string; title: string; group: string; sourceSection: string; note: string; metrics: Metric[]; visible?:boolean; chart?:'auto'|'bars'|'cards'; duration?:number; pageSize?:number }
+export type DirectorReport = { title: string; asOf: string; source: string; sourceHash?: string; sourceText?: string; sections: ReportSection[]; presentation?:{title?:string; showOverview?:boolean; duration?:number; summaryMetricIds?:string[]} }
 export type PublishedReport = { id: string; report: DirectorReport; publishedAt: string }
 export type EditableReport = { id: string; draft: DirectorReport; published: DirectorReport | null; version: number; published_at: string | null }
 export const groups = [
