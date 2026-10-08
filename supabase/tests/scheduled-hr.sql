@@ -12,7 +12,7 @@ begin
  if (public.current_hr_slides()->'birthdays'->0) ? 'dateKey' then raise exception 'Birthday date leaked'; end if;
  if public.valid_hr_plan('birthday',jsonb_set(p,'{dateKey}','"02-30"'),true) then raise exception 'Invalid date accepted'; end if;
  if not public.valid_hr_plan('birthday',jsonb_set(p,'{dateKey}','"02-29"'),true) then raise exception 'Leap birthday rejected'; end if;
- p:=p||jsonb_build_object('photoPath','employee/test.png','dateKey',to_char(now() at time zone 'Asia/Tashkent','YYYY-MM'));
+ p:=p||jsonb_build_object('photoPath','employee/test.png','dateKey',to_char((now() at time zone 'Asia/Tashkent')-interval '1 month','YYYY-MM'));
  insert into public.hr_plans(kind,draft,published) values ('employee',p,p);
  begin
   insert into public.hr_plans(kind,draft,published) values ('employee',p,p);

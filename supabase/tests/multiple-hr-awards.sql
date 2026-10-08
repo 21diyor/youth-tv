@@ -7,7 +7,7 @@ begin
  for i in 1..7 loop
   p:=jsonb_build_object('enabled',true,'name','Fixture '||i,'position','Specialist','department','Team','message','Congratulations','recognition','Recognition','photoPath','birthday/fixture-'||i||'.png','dateKey',to_char(now() at time zone 'Asia/Tashkent','MM-DD'));
   insert into public.hr_plans(kind,draft,published) values('birthday',p,p) returning id into staff;
-  p:=p||jsonb_build_object('staffId',staff,'dateKey',to_char(now() at time zone 'Asia/Tashkent','YYYY-MM'));
+  p:=p||jsonb_build_object('staffId',staff,'dateKey',to_char((now() at time zone 'Asia/Tashkent')-interval '1 month','YYYY-MM'));
   insert into public.hr_plans(kind,draft,published) values('employee',p,p);
   update public.slide_settings set employee_enabled=true where status='published';
   update public.birthday_content set payload=jsonb_set(payload,'{enabled}','true') where status='published';

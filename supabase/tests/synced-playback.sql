@@ -6,7 +6,7 @@ declare p jsonb; person uuid; award uuid; state jsonb; row jsonb;
 begin
  p:=jsonb_build_object('enabled',false,'name','Profile test','position','Specialist','department','Team','message','Happy birthday','recognition','','photoPath','birthday/first.png','dateKey','12-31');
  insert into public.hr_plans(kind,draft) values('birthday',p) returning id into person;
- p:=p||jsonb_build_object('enabled',true,'staffId',person,'name','Stale name','photoPath','employee/old.png','recognition','Reason','dateKey',to_char(now() at time zone 'Asia/Tashkent','YYYY-MM'));
+ p:=p||jsonb_build_object('enabled',true,'staffId',person,'name','Stale name','photoPath','employee/old.png','recognition','Reason','dateKey',to_char((now() at time zone 'Asia/Tashkent')-interval '1 month','YYYY-MM'));
  insert into public.hr_plans(kind,draft,published) values('employee',p,p) returning id into award;
  if public.current_hr_slides()->'employee'->>'photoPath'<>'birthday/first.png' then raise exception 'Award is using stale image'; end if;
  update public.hr_plans set draft=jsonb_set(draft,'{photoPath}','"birthday/second.png"') where id=person;

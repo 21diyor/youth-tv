@@ -1,3 +1,4 @@
+import { previousMonthKey } from "@/lib/awardMonth"
 import {useEffect,useState} from "react"
 import {Plus,UserRound,CheckCircle2,CalendarDays} from "lucide-react"
 import {emptyHrPayload,loadHrPlans,saveHrPlan,publishHrPlan,type HrPlan,type HrPayload} from "@/data/hrPlans"
@@ -53,7 +54,7 @@ export function ScheduledHrEditor({mode,onOpenStaff}:{mode:"staff"|"birthday"|"e
    const saved=await saveHrPlan(selected?.id??null,kind,payload);accept(saved)
    if(publish || kind==="birthday"&&(valid||!payload.enabled)) {
     accept(await publishHrPlan(saved.id))
-    setMessage(kind==="birthday"?"Saqlandi. Xodim rasmi va ma’lumoti bog‘langan slaydlarda yangilanadi. Tabrik belgilangan kuni chiqadi.":"Reja saqlandi va e’lon qilindi. TV tanlangan oyda avtomatik ko‘rsatadi.")
+    setMessage(kind==="birthday"?"Saqlandi. Xodim rasmi va ma’lumoti bog‘langan slaydlarda yangilanadi. Tabrik belgilangan kuni chiqadi.":"Reja saqlandi va e’lon qilindi. TV tanlangan oydan keyingi oyda avtomatik ko‘rsatadi.")
    } else setMessage(mode==="staff"?"Xodim saqlandi. Avtomatik tabrik uchun tug‘ilgan sana va rasmni to‘ldiring.":"Qoralama saqlandi. Tayyor bo‘lganda e’lon qiling.")
   } catch(err) {
    const code=(err as {code?:string}).code
@@ -62,16 +63,17 @@ export function ScheduledHrEditor({mode,onOpenStaff}:{mode:"staff"|"birthday"|"e
  }
  const currentMonth=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Tashkent",year:"numeric",month:"2-digit"}).formatToParts(new Date())
  const monthKey=currentMonth.find(p=>p.type==="year")?.value+"-"+currentMonth.find(p=>p.type==="month")?.value
- const nextMonth=()=>selected?.draft.dateKey||monthKey
+ const awardKey=previousMonthKey(monthKey)
+ const nextMonth=()=>selected?.draft.dateKey||awardKey
  const rowStatus=(row:HrPlan)=>kind==="birthday"?(row.published?.enabled?"Avtomatik tabrik yoqilgan":"Tabrik yoqilmagan"):
-  !row.published?.enabled?"Qoralama":row.published.dateKey===monthKey?"TV: joriy oy":row.published.dateKey>monthKey?"Kelgusi oyga e’lon qilingan":"Oldingi oy"
+  !row.published?.enabled?"Qoralama":row.published.dateKey===awardKey?"TV: hozir namoyishda":row.published.dateKey>awardKey?"Kelgusi oyga e’lon qilingan":"Oldingi oy"
  const displayedName=(row:HrPlan)=>kind==="employee"?staff.find(p=>p.id===row.draft.staffId)?.draft.name||row.draft.name:row.draft.name
  const missing=mode==="employee"&&!person?"Ro‘yxatdan xodimni tanlang. Eski yozuvdagi ismning o‘zi yetarli emas.":
   !validDate(kind,payload.dateKey)?"Sanani tanlang.":!payload.photoPath?"Xodimlar bo‘limida rasm yuklang.":
   !payload.position&&kind==="employee"?"Xodimlar bo‘limida lavozimni kiriting.":kind==="employee"&&!payload.recognition.trim()?"E’tirof sababini kiriting.":"Ma’lumotlarni to‘ldiring."
  if(loading)return <p role="status">Yuklanmoqda…</p>
  return <div>
- <header className="mb-7 flex flex-wrap items-start justify-between gap-5"><div><p className="mb-2 text-xs font-semibold uppercase tracking-widest text-blue-700">HR bo‘limi</p><h3 className="text-3xl font-semibold">{mode==="staff"?"Xodimlar":mode==="birthday"?"Tug‘ilgan kunlar":"Oy xodimlari"}</h3><p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-500">{mode==="staff"?"Ism, lavozim, bo‘lim, tug‘ilgan sana va rasm — bir joyda. Saqlangan ma’lumot oy xodimi va tabriklarda avtomatik ishlatiladi.":mode==="birthday"?"Xodimni tanlang, tabrik matnini yozing va avtomatik tabrikni yoqing. Tabrik har yili tug‘ilgan kuni Toshkent vaqti bilan chiqadi.":"Xodimni ro‘yxatdan tanlang, oy va e’tirof sababini belgilang. Bir oyga bir nechta xodim qo‘shing. TV avval umumiy, keyin har bir xodim slaydini ko‘rsatadi. Kelgusi oylarni oldindan tayyorlang."}</p></div>
+ <header className="mb-7 flex flex-wrap items-start justify-between gap-5"><div><p className="mb-2 text-xs font-semibold uppercase tracking-widest text-blue-700">HR bo‘limi</p><h3 className="text-3xl font-semibold">{mode==="staff"?"Xodimlar":mode==="birthday"?"Tug‘ilgan kunlar":"Oy xodimlari"}</h3><p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-500">{mode==="staff"?"Ism, lavozim, bo‘lim, tug‘ilgan sana va rasm — bir joyda. Saqlangan ma’lumot oy xodimi va tabriklarda avtomatik ishlatiladi.":mode==="birthday"?"Xodimni tanlang, tabrik matnini yozing va avtomatik tabrikni yoqing. Tabrik har yili tug‘ilgan kuni Toshkent vaqti bilan chiqadi.":"Xodimni ro‘yxatdan tanlang, oy va e’tirof sababini belgilang. Bir oyga bir nechta xodim qo‘shing. Sentabr natijalari oktabrda, oktabr natijalari noyabrda namoyish etiladi. TV avval umumiy, keyin har bir xodim slaydini ko‘rsatadi. Kelgusi oylarni oldindan tayyorlang."}</p></div>
  {mode!=="birthday"?<button disabled={busy} onClick={()=>choose(null)} className="flex items-center gap-2 rounded-lg bg-blue-700 px-5 py-3 font-semibold text-white"><Plus size={20}/>{mode==="staff"?"Xodim qo‘shish":"Oyga xodim qo‘shish"}</button>:<button onClick={onOpenStaff} className="rounded-lg border px-4 py-3">Xodimlar ro‘yxatini ochish</button>}</header>
  <div role="status" className="mb-4 text-sm"><span className="text-red-700">{error}</span><span className="text-emerald-700">{message}</span></div>
  <div className="grid grid-cols-1 gap-6 xl:grid-cols-[280px_minmax(0,1fr)]">
@@ -82,7 +84,7 @@ export function ScheduledHrEditor({mode,onOpenStaff}:{mode:"staff"|"birthday"|"e
  })}</div>{!records.length&&<p className="p-4 text-sm text-slate-500">{mode==="birthday"?"Avval Xodimlar bo‘limida xodim qo‘shing.":"Hozircha yozuv yo‘q."}</p>}</aside>
  {(mode!=="birthday"||selected)&&<fieldset disabled={busy} className="min-w-0 rounded-2xl border border-slate-200 bg-white p-6 md:p-8">
  <div className="mb-7 flex flex-wrap items-center justify-between gap-4 border-b pb-5"><h4 className="text-lg font-semibold">{mode==="staff"?"Xodim ma’lumotlari":mode==="birthday"?"Tabrik sozlamalari":"Oylik reja"}</h4><div className="flex gap-2"><button disabled={!canSave||busy} onClick={()=>save(false)} className="rounded-lg border px-4 py-2 disabled:opacity-40">Saqlash</button>{mode==="employee"&&<button disabled={busy||!canSave||(payload.enabled&&!valid)} onClick={()=>save(true)} className="rounded-lg bg-blue-700 px-4 py-2 text-white disabled:opacity-40">Saqlash va e’lon qilish</button>}</div></div>
- {mode==="employee"&&<div className="mb-6 grid gap-5 md:grid-cols-2"><label>Ko‘rsatiladigan oy<input aria-label="Ko‘rsatiladigan oy" type="month" min="2020-01" max="2200-12" className={inputClass} value={draft.dateKey} onChange={e=>update("dateKey",e.target.value)}/></label><label>Xodimni tanlang<select aria-label="Xodimni tanlang" className={inputClass} value={draft.staffId??""} onChange={e=>update("staffId",e.target.value)}><option value="">Ro‘yxatdan tanlang</option>{staff.map(p=><option key={p.id} value={p.id}>{p.draft.name}</option>)}</select></label></div>}
+ {mode==="employee"&&<div className="mb-6 grid gap-5 md:grid-cols-2"><label>Natijalar oyi<input aria-label="Natijalar oyi" type="month" min="2020-01" max="2200-12" className={inputClass} value={draft.dateKey} onChange={e=>update("dateKey",e.target.value)}/></label><label>Xodimni tanlang<select aria-label="Xodimni tanlang" className={inputClass} value={draft.staffId??""} onChange={e=>update("staffId",e.target.value)}><option value="">Ro‘yxatdan tanlang</option>{staff.map(p=><option key={p.id} value={p.id}>{p.draft.name}</option>)}</select></label></div>}
  <div className="flex flex-wrap gap-7 rounded-xl bg-slate-50 p-5"><Portrait path={mode==="employee"&&!person?null:profile.photoPath} name={profile.name} large/><div className="min-w-[200px] flex-1">
  {mode==="staff"?<><label className="block">Ism familiya<input className={inputClass} maxLength={200} value={draft.name} onChange={e=>update("name",e.target.value)}/></label><label className="mt-4 block">Lavozimi<input className={inputClass} maxLength={200} value={draft.position} onChange={e=>update("position",e.target.value)}/></label><label className="mt-4 block">Bo‘lim<input className={inputClass} maxLength={300} value={draft.department} onChange={e=>update("department",e.target.value)}/></label></>:<><h4 className="text-xl font-semibold">{person||mode==="birthday"?profile.name:"Xodim tanlanmagan"}</h4><p className="mt-2 text-slate-600">{person||mode==="birthday"?profile.position:""}</p><p className="mt-2 text-sm text-slate-500">{person||mode==="birthday"?profile.department:""}</p><button onClick={onOpenStaff} className="mt-5 text-sm font-semibold text-blue-700">Rasm va ma’lumotni Xodimlar bo‘limida tahrirlash →</button>{mode==="birthday"&&<p className="mt-5 flex items-center gap-2"><CalendarDays size={18}/>{draft.dateKey||"Tug‘ilgan sana belgilanmagan"}</p>}</>}
  </div></div>
