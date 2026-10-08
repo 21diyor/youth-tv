@@ -9,6 +9,17 @@ begin
   insert into public.hr_plans(kind,draft,published) values('birthday',p,p) returning id into staff;
   p:=p||jsonb_build_object('staffId',staff,'dateKey',to_char(now() at time zone 'Asia/Tashkent','YYYY-MM'));
   insert into public.hr_plans(kind,draft,published) values('employee',p,p);
+  update public.slide_settings set employee_enabled=true where status='published';
+  update public.birthday_content set payload=jsonb_set(payload,'{enabled}','true') where status='published';
+  t:=public.tv_playback_state();
+  if (select count(*) from jsonb_array_elements(t->'slides') s where s->>'id' like 'employee-group-%') <> (case when i=1 then 0 else (i+5)/6 end)
+    or (select count(*) from jsonb_array_elements(t->'slides') s where s->>'id' like 'birthday-group-%') <> (case when i=1 then 0 else (i+5)/6 end) then
+   raise exception 'Wrong overview count for % people',i;
+  end if;
+  if (select count(*) from jsonb_array_elements(t->'slides') s where s->>'id' like 'employee-%' and s->>'id' not like 'employee-group-%')<>i
+    or (select count(*) from jsonb_array_elements(t->'slides') s where s->>'id' like 'birthday-%' and s->>'id' not like 'birthday-group-%')<>i then
+   raise exception 'Missing individual slides for % people',i;
+  end if;
  end loop;
  begin
   insert into public.hr_plans(kind,draft,published) values('employee',p,p);
