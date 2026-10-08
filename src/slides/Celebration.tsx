@@ -18,7 +18,7 @@ export function PremiumPopper() {
 
 export function CornerConfetti() {
   return <div className="corner-confetti" aria-hidden="true">
-    {Array.from({ length: 160 }, (_, i) => {
+    {Array.from({ length: 40 }, (_, i) => {
       const side = i % 2
       const spread = (i * 47 % 100) / 100
       return <i key={i} className={`corner-particle ${i % 5 === 0 ? "confetti-ribbon" : ""}`} style={{

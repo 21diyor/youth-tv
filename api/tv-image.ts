@@ -16,7 +16,7 @@ export default async function handler(req:IncomingMessage,res:ServerResponse) {
   if(Number(upstream.headers.get('content-length'))>6*1024*1024){res.statusCode=413;res.end();return}
   const original=Buffer.from(await upstream.arrayBuffer())
   if(original.length>6*1024*1024){res.statusCode=413;res.end();return}
-  const image=await sharp(original,{limitInputPixels:50000000}).rotate().resize({width:1200,height:1400,fit:'inside',withoutEnlargement:true}).flatten({background:'#ffffff'}).jpeg({quality:82,progressive:false}).toBuffer()
+  const image=await sharp(original,{limitInputPixels:50000000}).rotate().resize({width:800,height:1000,fit:'inside',withoutEnlargement:true}).flatten({background:'#ffffff'}).jpeg({quality:78,progressive:false}).toBuffer()
   res.setHeader('Content-Type','image/jpeg');res.setHeader('Content-Length',image.length);res.end(image)
  }catch{res.statusCode=502;res.end()}
 }

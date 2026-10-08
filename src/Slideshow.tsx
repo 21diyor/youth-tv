@@ -8,7 +8,7 @@ import { EmployeeOfMonthSlide } from "@/slides/EmployeeOfMonthSlide"
 import { PresidentQuoteSlide } from "@/slides/PresidentQuoteSlide"
 import { BirthdaySlide, ManagementScheduleSlide, ManagerAppealsSlide } from "@/slides/DepartmentSlides"
 import {usePlaybackState,type PlaybackState} from "@/hooks/usePlaybackState"
-import {timelinePosition,type TimedSlide} from "@/lib/playbackTimeline"
+import {timelinePosition,nextPlaybackWake,type TimedSlide} from "@/lib/playbackTimeline"
 import { useTvTheme } from "@/hooks/useTvTheme"
 import { ChevronLeft, ChevronRight, Pause, Play, Maximize, Minimize } from "lucide-react"
 
@@ -17,12 +17,6 @@ const TRANSITION_MS = 450
 export function Slideshow() {
   const {state,offline}=usePlaybackState()
   useDeploymentUpdate()
-  useEffect(()=>{
-    if(!state)return
-    const paths:(string|null|undefined)[]=[...state.hr.birthdays,...state.hr.employees].map(p=>p.photoPath)
-    paths.push(...getPublished('schedule').entries.map(p=>p.photoPath),...getPublished('managers').managers.map(p=>p.photoPath))
-    preloadMedia(paths)
-  },[state])
   if(!state)return <main className="tv-playback tv-empty">{offline?"Serverga ulanilmoqda… Internet aloqasini tekshiring.":"TVlar sinxronlanmoqda…"}</main>
   const slides=state.slides.map(slot=>{
     let element:ReactNode=null
@@ -54,15 +48,50 @@ function Playback({slides,state,offline}:{slides:(TimedSlide & {element:ReactNod
   const [fullscreen,setFullscreen]=useState(!!document.fullscreenElement)
   const [controlMessage,setControlMessage]=useState("")
   const [controlsVisible,setControlsVisible]=useState(true)
-  useEffect(()=>{const timer=window.setInterval(()=>setTick(performance.now()),50);return()=>clearInterval(timer)},[])
-  const live=timelinePosition(slides,state.serverNow+tick-state.measuredAt)
+
+  const live=timelinePosition(slides,state.serverNow+Math.max(tick,state.measuredAt)-state.measuredAt)
   const manualIndex=manual?slides.findIndex(s=>s.id===manual.id):-1
   const activeIndex=manualIndex>=0?manualIndex:live?.index??0
   const current=slides[activeIndex]
   const elapsed=manualIndex>=0?Math.min(manual!.elapsed,current.durationMs):live?.elapsed??0
   const duration=current?.durationMs??5000
   const leaving=!paused&&duration-elapsed<=TRANSITION_MS
-  const togglePause=useCallback(()=>setManual(old=>old?null:current?{id:current.id,elapsed}:null),[current,elapsed])
+  const togglePause=useCallback(()=>{setTick(performance.now());setManual(old=>{
+    const now=timelinePosition(slides,state.serverNow+performance.now()-state.measuredAt)
+    return old?null:now?{id:now.id,elapsed:now.elapsed}:null
+  })},[slides,state])
+  useEffect(()=>{
+    if(paused)return
+    const now=timelinePosition(slides,state.serverNow+performance.now()-state.measuredAt)
+    if(!now)return
+    const timer=window.setTimeout(()=>setTick(performance.now()),nextPlaybackWake(now.duration,now.elapsed,TRANSITION_MS))
+    return()=>clearTimeout(timer)
+  },[tick,paused,state,slides])
+  useEffect(()=>{
+    const wake=()=>setTick(performance.now())
+    window.addEventListener('pageshow',wake)
+    document.addEventListener('visibilitychange',wake)
+    return()=>{window.removeEventListener('pageshow',wake);document.removeEventListener('visibilitychange',wake)}
+  },[])
+  useEffect(()=>{
+    // Warm only the current and next two slides, not the entire staff directory.
+    const paths:(string|null|undefined)[]=[]
+    const schedule=getPublished('schedule').entries
+    const managers=getPublished('managers').managers
+    for(let offset=0;offset<Math.min(3,slides.length);offset++){
+      const id=slides[(activeIndex+offset)%slides.length].id
+      if(id==='schedule')paths.push(...schedule.map(p=>p.photoPath))
+      else if(id==='president')paths.push(getPublished('president').portraitPath)
+      else if(id.startsWith('manager-')){const i=Number(id.split('-')[1]);paths.push(managers[i]?.photoPath||schedule[i]?.photoPath)}
+      else {
+        const category=id.startsWith('birthday-')?'birthday':'employee'
+        const people=category==='birthday'?state.hr.birthdays:state.hr.employees
+        if(id.includes('-group-')){const page=Number(id.split('-').at(-1));paths.push(...people.slice(page*6,page*6+6).map(p=>p.photoPath))}
+        else paths.push(people.find(p=>category+'-'+p.id===id)?.photoPath)
+      }
+    }
+    return preloadMedia(paths)
+  },[activeIndex,slides,state.hr])
   const advance=useCallback((direction:number)=>{
     if(!slides.length)return
     const next=slides[(activeIndex+direction+slides.length)%slides.length]
@@ -128,7 +157,7 @@ function Playback({slides,state,offline}:{slides:(TimedSlide & {element:ReactNod
     </div>
     </div>
     <div className="tv-progress-track" aria-hidden="true">
-      <div className="tv-progress-fill" style={{animation:"none",transform:`scaleX(${Math.min(1,elapsed/duration)})`}} />
+      <div key={`${current.id}-${live?.cycle}-${state.measuredAt}-${tick}-${paused}`} className="tv-progress-fill" style={{animationDuration:`${duration}ms`,animationDelay:`-${elapsed}ms`,animationPlayState:paused?"paused":"running"}} />
     </div>
     <nav className={`tv-controls ${controlsVisible || paused || controlMessage ? "is-visible" : ""}`} aria-label="Slayd boshqaruvi">
       <button onClick={() => advance(-1)} aria-label="Oldingi slayd" title="Oldingi slayd"><ChevronLeft /><span>Oldingi</span></button>

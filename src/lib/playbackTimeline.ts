@@ -20,3 +20,9 @@ export function clockAnchor(serverNow:number,sent:number,received:number) {
  // the remaining network transit. performance.now avoids TV clock settings.
  return {serverNow:serverNow+(received-sent)/2,measuredAt:received}
 }
+
+// React wakes only for the exit transition and the next shared slide boundary.
+export function nextPlaybackWake(duration:number,elapsed:number,transition:number) {
+ const remaining=duration-elapsed
+ return Math.max(1,Math.ceil(remaining>transition?remaining-transition:remaining))
+}

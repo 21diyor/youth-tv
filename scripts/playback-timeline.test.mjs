@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {timelinePosition,clockAnchor} from '../src/lib/playbackTimeline.ts'
+import {timelinePosition,clockAnchor,nextPlaybackWake} from '../src/lib/playbackTimeline.ts'
 
 const slides=[{id:'appeals',durationMs:10000},{id:'schedule',durationMs:30000},{id:'birthday',durationMs:15000}]
 test('different durations have exact shared boundaries with no transition drift',()=>{
@@ -26,4 +26,11 @@ test('late wakes and playlist changes recalculate directly; empty playlists are 
  assert.equal(timelinePosition(slides.slice(1),40000).id,'birthday')
  assert.equal(timelinePosition(slides,10000).id,'schedule')
  assert.equal(timelinePosition(slides,10000+55*1000*20).id,'schedule')
+})
+
+test('idle slides sleep until transitions and boundaries without frame polling',()=>{
+ assert.equal(nextPlaybackWake(10000,0,450),9550)
+ assert.equal(nextPlaybackWake(10000,9550,450),450)
+ assert.equal(nextPlaybackWake(10000,9999,450),1)
+ assert.equal(nextPlaybackWake(10000,10001,450),1)
 })

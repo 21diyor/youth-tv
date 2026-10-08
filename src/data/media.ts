@@ -136,7 +136,7 @@ export function uploadManagerPortrait(file: File): Promise<string> {
 // AUTHENTICATED IMAGE LOADING (private bucket → blob URL)
 // ======================================================
 
-const MAX_CACHED = 48
+const MAX_CACHED = 20
 const consumers = new Map<string,number>()
 const urlCache = new Map<string, Promise<string>>()
 
@@ -164,15 +164,17 @@ export function loadMediaUrl(path: string): Promise<string> {
   const cached = urlCache.get(path)
 
   if (cached) {
+    urlCache.delete(path)
+    urlCache.set(path,cached)
     return cached
   }
 
   const publicTv=!window.location.pathname.startsWith('/admin')&&!window.location.pathname.startsWith('/dashboard')
   const promise = publicTv&&!import.meta.env.DEV
-    ? fetchTvImage(path).then(blob=>URL.createObjectURL(blob))
+    ? fetchTvImage(path).then(decodedUrl)
     : getSupabase().storage.from(BUCKET).download(path).then(({data,error})=>{
         if(error||!data)throw error??new Error('Rasm topilmadi')
-        return URL.createObjectURL(data)
+        return decodedUrl(data)
       })
 
   remember(path, promise)
@@ -185,6 +187,22 @@ export function loadMediaUrl(path: string): Promise<string> {
   })
 
   return promise
+}
+
+// Verify decoding before caching a success: HTTP 200 can still contain an
+// unsupported/corrupt image on a TV. Failed decodes follow the normal retry path.
+async function decodedUrl(blob:Blob):Promise<string> {
+ const url=URL.createObjectURL(blob)
+ try {
+  await new Promise<void>((resolve,reject)=>{
+   const image=new Image()
+   const timer=setTimeout(()=>{image.src='';reject(new Error('Image decode timeout'))},15000)
+   image.onload=()=>{clearTimeout(timer);resolve()}
+   image.onerror=()=>{clearTimeout(timer);reject(new Error('Image decode failed'))}
+   image.src=url
+  })
+  return url
+ }catch(error){URL.revokeObjectURL(url);throw error}
 }
 
 type MediaState = {
@@ -263,6 +281,10 @@ const preloading=new Set<string>()
 export function preloadMedia(paths:(string|null|undefined)[]) {
  const queue=[...new Set(paths.filter((p):p is string=>!!p))].filter(p=>!urlCache.has(p)&&!preloading.has(p))
  queue.forEach(p=>preloading.add(p))
- const worker=async()=>{for(let path=queue.shift();path;path=queue.shift()){try{await loadMediaUrl(path)}catch{/* Mounted images retry. */}finally{preloading.delete(path)}}}
- void worker();void worker()
+ let cancelled=false
+ const worker=async()=>{for(let path=queue.shift();path;path=queue.shift()){
+   try{if(!cancelled)await loadMediaUrl(path)}catch{/* Mounted images retry. */}finally{preloading.delete(path)}
+ }}
+ void worker()
+ return()=>{cancelled=true}
 }
