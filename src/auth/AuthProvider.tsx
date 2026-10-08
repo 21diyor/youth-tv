@@ -156,7 +156,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = useCallback(
     async (email: string, password: string) => {
       const { error } = await getSupabase().auth.signInWithPassword({
-        email: loginEmail(email),
+        email: loginEmail(email, ['/dashboard-admin','/dashboard/admin'].includes(window.location.pathname)),
         password,
       })
 

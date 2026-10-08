@@ -132,7 +132,7 @@ See [supabase/README.md](supabase/README.md) for backend status and migration no
 
 ### Dashboard administration
 
-`/dashboard-admin` (also `/dashboard/admin`) is the dedicated editor. Sign in with the existing Super Admin email and password; it uses the admin session, separate from the director session. HR, appeals and the director's read-only account cannot edit reports. The existing TV admin entry also opens this editor.
+`/dashboard-admin` (also `/dashboard/admin`) is the dedicated editor. Its `dashboard` username resolves to a separate dashboard-editor Auth identity, with its own session storage. The same username on `/dashboard` resolves to the read-only director identity. Super Admin can also sign in with email. HR, appeals and the director's read-only account cannot edit reports. The dashboard editor has no TV roles. Passwords are provisioned only in Supabase Auth, never in source. Apply `20261008045632_dashboard_editor_access.sql` and provision the editor privately in `dashboard_editors`. The existing TV admin entry also opens this editor.
 
 **Ma’lumotlar** manages section titles, categories, metrics, values, units, periods and source notes. Sections and metrics can be added, removed with undo, and reordered. **Slaydlar va vaqt** controls visibility, default/per-section durations (5–300 seconds), overview title and four headline metrics. Each section supports automatic charts, comparison bars or number cards, with 2–6 metrics per slide. Bars require compatible units and periods; otherwise cards preserve the separate measures.
 

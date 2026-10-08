@@ -85,7 +85,7 @@ export function getSupabase(): TvSupabaseClient {
       autoRefreshToken: admin,
       detectSessionInUrl: admin,
       // TV requests never inherit an old TV/admin login from this browser.
-      ...(director ? {storageKey: "youth-tv-director",storage: window.sessionStorage} : admin ? {} : { storageKey: "youth-tv-public" }),
+      ...(dashboardAdmin ? {storageKey:"youth-tv-dashboard-editor",storage:window.sessionStorage} : director ? {storageKey: "youth-tv-director",storage: window.sessionStorage} : admin ? {} : { storageKey: "youth-tv-public" }),
     },
     global: {
       fetch: privateStorageFetch,

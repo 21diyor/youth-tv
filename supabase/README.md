@@ -100,3 +100,7 @@ Verified with rollback-only SQL fixtures: multiple same-day birthdays, exclusion
 ### Shared directory migration
 
 `20261005061954_shared_staff_directory.sql` reuses private birthday records as staff profiles and adds `staffId` to monthly draft payloads. Existing employee profiles are copied into the directory with birthdays disabled until HR supplies a date. Publishing monthly awards resolves name, role, department and photo from the selected staff profile on the server. Storage accepts both existing HR photo prefixes, with public reads still limited to currently eligible published references. RLS and the date-only public RPC remain unchanged. Verified HR profile reuse, automatic birthday selection, future-month exclusion, and rejection of nonexistent staff IDs using rolled-back fixtures.
+
+### Dedicated dashboard editor
+
+The dashboard editor account is provisioned through the Auth admin API. Its temporary provisioning function is disabled (HTTP 410, JWT required). `dashboard_editors` has RLS, no direct client grants and deliberately no policies: only the guarded `is_dashboard_editor()` lookup reads it. This explains the [no-policy informational advisory](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy). Dashboard save/publish RPCs enforce this permission and preserve version checks. The editor has no TV roles and cannot read the director-only feed.

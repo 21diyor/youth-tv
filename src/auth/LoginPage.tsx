@@ -60,7 +60,7 @@ export function LoginPage({dashboardAdmin=false}:{dashboardAdmin?:boolean}) {
         </h1>
 
         <p className="mt-[6px] text-[13px] leading-[1.6] text-neutral-500">
-          {dashboardAdmin?'Dashboard administratori emaili va parolini kiriting.':'Bo‘lim uchun login, Super Admin uchun email kiriting.'}
+          {dashboardAdmin?'Dashboard administratori login va parolini kiriting.':'Bo‘lim uchun login, Super Admin uchun email kiriting.'}
         </p>
 
         <form

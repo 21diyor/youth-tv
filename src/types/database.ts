@@ -404,6 +404,7 @@ export type Database = {
         Returns: boolean
       }
       is_dashboard_owner: { Args: never; Returns: boolean }
+      is_dashboard_editor: { Args: never; Returns: boolean }
       is_super_admin: { Args: never; Returns: boolean }
       publish_appeals_content: {
         Args: never
